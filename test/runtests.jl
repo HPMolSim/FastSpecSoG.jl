@@ -1,6 +1,7 @@
 using FastSpecSoG
 using Test
+using ExTinyMD, EwaldSummations
 
 @testset "FastSpecSoG.jl" begin
-    # Write your tests here.
+    include("energy_naive.jl")
 end
