@@ -26,5 +26,5 @@ function long_energy_naive_k(K::NTuple{3, T}, interaction::FastSpecSOGInteractio
         end
     end
 
-    return energy_k * π / (interaction.L[1] * interaction.L[2])
+    return energy_k * π / (2 * interaction.L[1] * interaction.L[2])
 end

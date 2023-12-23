@@ -15,13 +15,19 @@ function short_energy_naive(interaction::FastSpecSOGInteraction{T}, neighbor::Ce
         end
     end
 
-    # for i in 1:interaction.n_atoms
-    #     energy_short += Es_naive_self(q[i], interaction.α)
-    # end
+    energy_short += Es_naive_self(q, interaction)
 
     return energy_short / (4π * interaction.ϵ)
 end
 
 function Es_naive_pair(q_1::T, q_2::T, uspara::USeriesPara{T}, r_sq::T) where{T}
     return q_1 * q_2 * (one(T) / sqrt(r_sq) - U_series(sqrt(r_sq), uspara))
+end
+
+function Es_naive_self(q::Vector{T}, interaction::FastSpecSOGInteraction{T}) where{T}
+    Q = sum(qi^2 for qi in q)
+
+    F0 = - log(interaction.b) / sqrt(2π) / interaction.σ * (interaction.ω + (one(T) - interaction.b^(-interaction.M)) / (interaction.b - one(T)))
+
+    return Q * F0
 end
