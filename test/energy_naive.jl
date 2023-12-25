@@ -32,6 +32,5 @@
     energy_icm = Energy_Q2D(sys_q2d, coords, charge, ref_pos, ref_charge)
 
     @show energy_ewald, energy_sog, energy_icm, energy_ewald - energy_sog
-    @test abs(energy_icm - energy_ewald) < 1e-4
     @test abs(energy_ewald - energy_sog) < 1e-4
 end

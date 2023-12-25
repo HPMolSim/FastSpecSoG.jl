@@ -22,9 +22,12 @@ function U_series(x::T, b::T, σ::T, M::Int) where{T}
     return U_series_value
 end
 
-function USeriesPara(b::T, σ::T, M::Int) where{T}
+function USeriesPara(b::T, σ::T, ω::T, M::Int) where{T}
     sw = Vector{NTuple{2, T}}(undef, M + 1)
-    for l in 0:M
+
+    sw[1] = (sqrt(2 * σ^2), ω * sqrt(2 / π) * log(b) / σ)
+
+    for l in 1:M
         sw[l + 1] = (sqrt(2 * b^(2 * l) * σ^2), sqrt(2 / π) * log(b) / σ / b^l)
     end
     return USeriesPara(sw)

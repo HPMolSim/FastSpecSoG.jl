@@ -39,9 +39,9 @@ function k_set_2D(k_c::T, L::NTuple{3,T}) where{T}
 end
 
 
-function FastSpecSOGInteraction(L::NTuple{3, T}, n_atoms::Int;ϵ::T = 1.0, b::T = 1.62976708826776469, σ::T = 3.633717409009413, ω::T = 1.00780697934380681, M::Int = 16, r_c::T = 10.0, k_c::T = 2.0) where{T}
-# function FastSpecSOGInteraction(L::NTuple{3, T}, n_atoms::Int;ϵ::T = 1.0, b::T = 1.21812525709410644, σ::T = 1.774456369233284, ω::T = 1.00090146156033341, M::Int = 102, r_c::T = 10.0, k_c::T = 3.0) where{T}
-    uspara = USeriesPara(b, σ, M)
+# function FastSpecSOGInteraction(L::NTuple{3, T}, n_atoms::Int;ϵ::T = 1.0, b::T = 1.62976708826776469, σ::T = 3.633717409009413, ω::T = 1.00780697934380681, M::Int = 16, r_c::T = 10.0, k_c::T = 2.0) where{T}
+function FastSpecSOGInteraction(L::NTuple{3, T}, n_atoms::Int;ϵ::T = 1.0, b::T = 1.21812525709410644, σ::T = 1.774456369233284, ω::T = 1.00090146156033341, M::Int = 102, r_c::T = 10.0, k_c::T = 3.0) where{T}
+    uspara = USeriesPara(b, σ, ω, M)
     k_set = k_set_2D(k_c, L)
     return FastSpecSOGInteraction{T}(b, σ, ω, M, r_c, k_c, ϵ, L, k_set, uspara, n_atoms)
 end
