@@ -39,8 +39,25 @@ function k_set_2D(k_c::T, L::NTuple{3,T}) where{T}
 end
 
 
-# function FastSpecSOGInteraction(L::NTuple{3, T}, n_atoms::Int;ϵ::T = 1.0, b::T = 1.62976708826776469, σ::T = 3.633717409009413, ω::T = 1.00780697934380681, M::Int = 16, r_c::T = 10.0, k_c::T = 2.0) where{T}
-function FastSpecSOGInteraction(L::NTuple{3, T}, n_atoms::Int;ϵ::T = 1.0, b::T = 1.21812525709410644, σ::T = 1.774456369233284, ω::T = 1.00090146156033341, M::Int = 102, r_c::T = 10.0, k_c::T = 3.0) where{T}
+function FastSpecSOGInteraction(L::NTuple{3, T}, n_atoms::Int, r_c::T, k_c::T, b::T, σ::T, ω::T, M::T; ϵ::T = 1.0) where{T}
+    uspara = USeriesPara(b, σ, ω, M)
+    k_set = k_set_2D(k_c, L)
+    return FastSpecSOGInteraction{T}(b, σ, ω, M, r_c, k_c, ϵ, L, k_set, uspara, n_atoms)
+end
+
+function FastSpecSOGInteraction(L::NTuple{3, T}, n_atoms::Int, r_c::T, k_c::T; preset::Int = 1, ϵ::T = 1.0) where{T}
+
+    # these are preset parameters
+    preset_parameters = [
+        [2.0, 5.027010924194599, 0.994446492762232252, 6], 
+        [1.62976708826776469, 3.633717409009413, 1.00780697934380681, 16], 
+        [1.48783512395703226, 2.662784519725113, 0.991911705759818, 30], 
+        [1.32070036405934420, 2.277149356440992, 1.00188914114811980, 64],
+        [1.21812525709410644, 1.774456369233284, 1.00090146156033341, 102]]
+
+    @assert preset ≤ length(preset_parameters)
+    
+    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]), T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
     uspara = USeriesPara(b, σ, ω, M)
     k_set = k_set_2D(k_c, L)
     return FastSpecSOGInteraction{T}(b, σ, ω, M, r_c, k_c, ϵ, L, k_set, uspara, n_atoms)
