@@ -19,7 +19,7 @@
     Ewald2D_neighbor = CellList3D(info, Ewald2D_interaction.r_c, boundary, 1)
     energy_ewald = energy(Ewald2D_interaction, Ewald2D_neighbor, info, atoms)
 
-    FastSpecSoG_interaction = FastSpecSOGInteraction((L, L, L), n_atoms, 10.0, 3.0, preset = 5)
+    FastSpecSoG_interaction = FSSoG_naive((L, L, L), n_atoms, 10.0, 3.0, preset = 5)
     FastSpecSoG_neighbor = CellList3D(info, FastSpecSoG_interaction.r_c, boundary, 1)
     energy_sog = energy_naive(FastSpecSoG_interaction, FastSpecSoG_neighbor, info, atoms)
 

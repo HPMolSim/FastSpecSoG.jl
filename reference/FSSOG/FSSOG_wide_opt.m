@@ -70,9 +70,9 @@ for t=1:N3
         H_tilde_kspace=H_tilde_kspace+temp_H.*A3;
     end
 end
-
-21
+toc
 %% Step 2: Convert to Chebyshev series.
+tic
 B_in(1:2*Nx+1,1:2*Ny+1,1:R)=0;
 for k=1:R
   for l=1:R
@@ -81,9 +81,8 @@ for k=1:R
   end
 end
 
-22
-
-t_long=t_long+toc;
+toc
+%t_long=t_long+toc;
 %% Step 3: SolEqn
 coef_Phi(1:2*Nx+1,1:2*Ny+1,1:R)=0; %For each k-mode, it stores [phi_0'',phi_1'',...,phi_{R-1}'',phi_0,phi_0']
 
@@ -139,7 +138,8 @@ for t=1:N3
         beta=beta+pi*wl(ell)*sl(ell)^2.*exp(-sl(ell)^2.*kk_temp.^2./4).*x(t,4).*exp(-1i.*(k_x_temp.*x(t,1)+k_y_temp.*x(t,2))).*exp(-(Lz/2-x(t,3))^2/sl(ell)^2);
     end
 end
-t_long=t_long+toc;
+toc
+% t_long=t_long+toc;
 
 
 %Store the inverse
@@ -191,13 +191,12 @@ for i=1:2*Nx+1
         end
     end
 end
-t_long=t_long+toc;
-
-23
+toc
+% t_long=t_long+toc;
 
 
 %% Step 4:Gathering
-tic;
+tic
 phi(1:N3)=0;
 
 for t=1:N3
@@ -212,7 +211,9 @@ for t=1:N3
     end
 end
 
-t_long=t_long+toc;
+
+toc
+%t_long=t_long+toc;
 
 %Zero-mode FCT
 Coef=0;
@@ -248,16 +249,15 @@ end
 phi=phi+temp_phi;
 
 Pot_wide=phi;
-24
+toc
 
-t_long=t_long+toc;
+%t_long=t_long+toc;
 %% Verification
 
 [real_phi,t_Dlong]=Wide_Direct(M_min,M_max,L,x,N);
 
 error=(phi-real_phi)';
 err=max(abs(error));
-25
 
 
 

@@ -1,13 +1,19 @@
 module FastSpecSoG
 
-using ExTinyMD, LinearAlgebra, FFTW, LoopVectorization
+using ExTinyMD, LinearAlgebra, FFTW, LoopVectorization, FastTransforms, SpecialFunctions
 
 export USeriesPara, U_series
-export FastSpecSOGInteraction
+export FSSoG_naive
 export short_energy_naive, long_energy_naive, energy_naive
 
 include("types.jl")
-include("U_series.jl")
+
+include("utils/U_series.jl")
+include("utils/polys.jl")
+include("utils/mesh.jl")
+
+include("utils/FSSoGInteraction.jl")
+
 
 include("energy/energy.jl")
 include("energy/energy_short_naive.jl")

@@ -1,4 +1,4 @@
-function short_energy_naive(interaction::FastSpecSOGInteraction{T}, neighbor::CellList3D{T}, position::Vector{Point{3, T}}, q::Vector{T}) where{T}
+function short_energy_naive(interaction::FSSoG_naive{T}, neighbor::CellList3D{T}, position::Vector{Point{3, T}}, q::Vector{T}) where{T}
     neighbor_list = neighbor.neighbor_list
 
     energy_short = zero(T)
@@ -24,7 +24,7 @@ function Es_naive_pair(q_1::T, q_2::T, uspara::USeriesPara{T}, r_sq::T) where{T}
     return q_1 * q_2 * (one(T) / sqrt(r_sq) - U_series(sqrt(r_sq), uspara))
 end
 
-function Es_naive_self(q::Vector{T}, interaction::FastSpecSOGInteraction{T}) where{T}
+function Es_naive_self(q::Vector{T}, interaction::FSSoG_naive{T}) where{T}
     Q = sum(qi^2 for qi in q)
 
     F0 = - log(interaction.b) / sqrt(2π) / interaction.σ * (interaction.ω + (one(T) - interaction.b^(-interaction.M)) / (interaction.b - one(T)))

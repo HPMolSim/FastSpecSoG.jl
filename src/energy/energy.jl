@@ -1,4 +1,4 @@
-function energy_naive(interaction::FastSpecSOGInteraction{T}, neighbor::CellList3D{T}, info::SimulationInfo{T}, atoms::Vector{Atom{T}}) where{T}
+function energy_naive(interaction::FSSoG_naive{T}, neighbor::CellList3D{T}, info::SimulationInfo{T}, atoms::Vector{Atom{T}}) where{T}
 
     charge = [atoms[info.particle_info[i].id].charge for i in 1:interaction.n_atoms]
     position = [info.particle_info[i].position for i in 1:interaction.n_atoms]
