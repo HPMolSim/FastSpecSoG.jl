@@ -34,14 +34,14 @@ x=cell2mat(xx_temp);
 %Method setting
 Nx=16; Ny=Nx; Nz=Nx; %number of grid points in xyz-directions
 h=L/Nx;
-wsearch=Nx/4;
+wsearch=Nx/4; % 窗函数宽度
 width=wsearch*h; %Interpolation distance
 width_window=width+0.5*h;
 
-beta=2*2.5*wsearch;
+beta=2*2.5*wsearch; % kB function 参数
 rx(1:Nx+2*wsearch+2)=linspace(-L/2-h-width,L/2+width,Nx+2*wsearch+2); %With virtual images
 ry(1:Ny+2*wsearch+2)=linspace(-L/2-h-width,L/2+width,Ny+2*wsearch+2); %With virtual images
-rz(1:Nz+2*wsearch+2)=linspace(-L/2-h-width,L/2+width,Nz+2*wsearch+2);
+% rz(1:Nz+2*wsearch+2)=linspace(-L/2-h-width,L/2+width,Nz+2*wsearch+2);
 
 pad_ratio=3; %Padding ratio w.r.t window width
 pad_search=pad_ratio*wsearch;
@@ -331,7 +331,7 @@ for j=1:N3 %Contribute the j-th charge
            Cz_int(ind+wsearch+1,:)=Coef(index_zz(ind+wsearch+1),:);
         end
     end
-    
+
     %Calculate factor
     PKB_x(1:2*wsearch+1)=0;
     PKB_y(1:2*wsearch+1)=0;
