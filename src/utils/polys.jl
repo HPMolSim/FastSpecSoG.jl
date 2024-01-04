@@ -43,6 +43,13 @@ function Pkb_coef(h::T, wsearch::TI; P::TI = TI(2 * wsearch), width::T = T(wsear
 
     x = chebyshevpoints(T, ν, Val(1))
 
+    Vdm = zeros(T, (ν, ν))
+    for i in 1:ν
+        for j in 1:ν
+            Vdm[i, j] = x[i]^(j - 1)
+        end
+    end
+
     for i in 1:P + 2
         if i == 1
             center = - width - h / 4
@@ -56,8 +63,7 @@ function Pkb_coef(h::T, wsearch::TI; P::TI = TI(2 * wsearch), width::T = T(wsear
         end
 
         b = Wkb(center .+ scale .* x, width_window, β)
-
-        C[i, :] = chebyshevtransform(b, Val(1))
+        C[i, :] = Vdm \ b
     end
 
     return C
