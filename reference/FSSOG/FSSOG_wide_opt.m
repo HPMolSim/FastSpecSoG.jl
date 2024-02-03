@@ -49,7 +49,7 @@ k_y_temp(1:2*Nx+1,1:2*Ny+1)=repmat(ky,2*Nx+1,1);
 %% Step 1: Directly caluculate the charge on Fourier-Chebyshev nodes
 t_long=0;
 H_tilde_kspace(1:2*Nx+1,1:2*Ny+1,1:R)=0;
-A2=zeros(2*Nx+1,2*Nx+1,l_range);
+A2=zeros(2*Nx+1,2*Ny+1,l_range);
 for ell=1:l_range
     A2(:,:,ell)=exp(-sl(ell)^2.*kk_temp.^2./4);
 end
@@ -71,6 +71,7 @@ for t=1:N3
     end
 end
 toc
+
 %% Step 2: Convert to Chebyshev series.
 tic
 B_in(1:2*Nx+1,1:2*Ny+1,1:R)=0;
@@ -178,8 +179,8 @@ for i=1:2*Nx+1
         RHS(R+2,1)=beta(i,j);
         
         D_inv(1:R+2,1:R+2)=Divisor_inv(:,:,i,j);
-        PhiPP(1:R+2)=D_inv*RHS;                                                                                                                                                                                    
-        
+        PhiPP(1:R+2)=D_inv*RHS;
+
         % Calculate the original coefficient
         SD(1:R+2)=0;
         SD(1:R)=PhiPP(1:R);
