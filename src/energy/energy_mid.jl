@@ -29,7 +29,7 @@ function mid_paras_gen(N_real::NTuple{3, Int}, w::NTuple{3, Int}, β::NTuple{3, 
     return (gridinfo, gridbox, cheb_coefs, scalefactor)
 end
 
-function energy_long_mid(qs::Vector{T}, poses::Vector{NTuple{3, T}}, gridinfo::GridInfo{3, T}, gridbox::GridBox{3, T}, cheb_coefs::NTuple{3, ChebCoef{T}}, scalefactor::ScalingFactor{3, T}) where{T}
+function energy_mid(qs::Vector{T}, poses::Vector{NTuple{3, T}}, gridinfo::GridInfo{3, T}, gridbox::GridBox{3, T}, cheb_coefs::NTuple{3, ChebCoef{T}}, scalefactor::ScalingFactor{3, T}) where{T}
 
     interpolate!(qs, poses, gridinfo, gridbox, cheb_coefs)
     fft!(gridbox)

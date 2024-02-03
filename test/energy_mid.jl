@@ -19,7 +19,7 @@
     gridinfo, gridbox, cheb_coefs, scalefactor = mid_paras_gen(N_real, w, β, L, extra_pad_ratio, cheb_order, uspara, M_mid)
 
     @info "running the 3DFFT for the middle range part of the energy"
-    E_3DFFT = energy_long_mid(qs, poses, gridinfo, gridbox, cheb_coefs, scalefactor)
+    E_3DFFT = energy_mid(qs, poses, gridinfo, gridbox, cheb_coefs, scalefactor)
 
     @info "running the direct summation for the middle range part of the energy"
     # using the direct summation
