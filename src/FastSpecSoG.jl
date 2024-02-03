@@ -5,6 +5,7 @@ using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh
 export USeriesPara, U_series, BSA
 export FSSoG_naive
 export short_energy_naive, long_energy_naive, energy_naive
+export mid_paras_gen, energy_long_mid
 
 include("types.jl")
 
