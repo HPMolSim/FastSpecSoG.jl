@@ -49,6 +49,7 @@ k_y_temp(1:2*Nx+1,1:2*Ny+1)=repmat(ky,2*Nx+1,1);
 %% Step 1: Directly caluculate the charge on Fourier-Chebyshev nodes
 t_long=0;
 H_tilde_kspace(1:2*Nx+1,1:2*Ny+1,1:R)=0;
+
 A2=zeros(2*Nx+1,2*Ny+1,l_range);
 for ell=1:l_range
     A2(:,:,ell)=exp(-sl(ell)^2.*kk_temp.^2./4);
@@ -59,15 +60,13 @@ for t=1:N3
     xt=x(t,1); yt=x(t,2); zt=x(t,3); qt=x(t,4);
     A1=exp(-1i.*(k_x_temp.*xt+k_y_temp.*yt));
 
-    A3(1:2*Nx+1,1:2*Ny+1)=0;
     for ell=1:l_range
-        A3=A1.*A2(:,:,ell);
         temp_H(1:2*Nx+1,1:2*Ny+1,1:R)=0;
         for k=1:R
             z_k=rz(k);                        
-            temp_H(:,:,k)=temp_H(:,:,k)+pi*qt*wl(ell).*(2-4*(z_k-zt)^2/sl(ell)^2+kk_temp.^2.*sl(ell)^2).*exp(-(z_k-zt)^2/sl(ell)^2);
+            temp_H(:,:,k)=temp_H(:,:,k) + pi * qt * wl(ell).*( 2 - 4*(z_k-zt)^2/sl(ell)^2 + kk_temp.^2 .* sl(ell)^2) .* exp(-(z_k-zt)^2/sl(ell)^2);
         end
-        H_tilde_kspace=H_tilde_kspace+temp_H.*A3;
+        H_tilde_kspace = H_tilde_kspace + temp_H .* A1 .* A2(:,:,ell);
     end
 end
 toc
@@ -79,6 +78,14 @@ for k=1:R
   for l=1:R
      tempB(1:2*Nx+1,1:2*Ny+1)= H_tilde_kspace(:,:,l);
      B_in(:,:,k)=B_in(:,:,k)+2/R.*tempB.*ChebPoly(k-1,rz(l),domain);
+  end
+end
+
+B_in(1:2*Nx+1,1:2*Ny+1,1:R)=0;
+for k=1:R
+  for l=1:R
+     tempB(1:2*Nx+1,1:2*Ny+1)= H_tilde_kspace(:,:,l);
+     B_in(:,:,k)=B_in(:,:,k)+2/R .*tempB .* cos((k - 1) * acos(rz(l) / domain));
   end
 end
 
@@ -130,19 +137,6 @@ D(1,2)=-scale;
 D(2,1)=1;
 D(2,2)=scale;
 
-tic
-alpha(1:2*Nx+1,1:2*Ny+1)=0;
-beta(1:2*Nx+1,1:2*Ny+1)=0;
-for t=1:N3
-    for ell=1:l_range
-        alpha=alpha+pi*wl(ell)*sl(ell)^2.*exp(-sl(ell)^2.*kk_temp.^2./4).*x(t,4).*exp(-1i.*(k_x_temp.*x(t,1)+k_y_temp.*x(t,2))).*exp(-(-Lz/2-x(t,3))^2/sl(ell)^2);
-        beta=beta+pi*wl(ell)*sl(ell)^2.*exp(-sl(ell)^2.*kk_temp.^2./4).*x(t,4).*exp(-1i.*(k_x_temp.*x(t,1)+k_y_temp.*x(t,2))).*exp(-(Lz/2-x(t,3))^2/sl(ell)^2);
-    end
-end
-toc
-% t_long=t_long+toc;
-
-
 %Store the inverse
 Divisor_inv(1:R+2,1:R+2,1:2*Nx+1,1:2*Ny+1)=0;
 for i=1:2*Nx+1
@@ -164,6 +158,23 @@ for i=1:2*Nx+1
         
         Divisor_inv(:,:,i,j)=inv(Divisor);
     end
+end
+
+tic
+alpha(1:2*Nx+1,1:2*Ny+1)=0;
+beta(1:2*Nx+1,1:2*Ny+1)=0;
+for t=1:N3
+    for ell=1:l_range
+        alpha=alpha+pi*wl(ell)*sl(ell)^2.*exp(-sl(ell)^2.*kk_temp.^2./4).*x(t,4).*exp(-1i.*(k_x_temp.*x(t,1)+k_y_temp.*x(t,2))).*exp(-(-Lz/2-x(t,3))^2/sl(ell)^2);
+        beta=beta+pi*wl(ell)*sl(ell)^2.*exp(-sl(ell)^2.*kk_temp.^2./4).*x(t,4).*exp(-1i.*(k_x_temp.*x(t,1)+k_y_temp.*x(t,2))).*exp(-(Lz/2-x(t,3))^2/sl(ell)^2);
+    end
+end
+toc
+% t_long=t_long+toc;
+
+for ell=1:l_range
+    alpha=alpha+pi*wl(ell)*sl(ell)^2.*exp(-sl(ell)^2.*kk_temp.^2./4).*qt.*exp(-1i.*(k_x_temp.* xt + k_y_temp.* yt)).*exp(-(-Lz/2-zt)^2/sl(ell)^2);
+    beta=beta+pi*wl(ell)*sl(ell)^2.*exp(-sl(ell)^2.*kk_temp.^2./4).*qt.*exp(-1i.*(k_x_temp.* xt + k_y_temp.* yt)).*exp(-(Lz/2-zt)^2/sl(ell)^2);
 end
 
 %SolEqn
@@ -188,7 +199,7 @@ for i=1:2*Nx+1
         coef_Phi(i,j,2)=1/8*scale^2*(SD(2)-SD(4))+scale*PhiPP(R+2);
         for s=3:R
             k=s-1;
-            coef_Phi(i,j,s)=1/(2*k)*scale^2*(1/(2*(k-1))*(SD(s-2)-SD(s))-1/(2*(k+1))*(SD(s)-SD(s+2)));  
+            coef_Phi(i,j,s)=1/(2*k)*scale^2 * ((SD(s-2)-SD(s)) / (2*(k-1)) - (SD(s)-SD(s+2)) / (2*(k+1)));  
         end
     end
 end

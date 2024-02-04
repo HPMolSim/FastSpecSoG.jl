@@ -1,9 +1,50 @@
 # precomputings
 
-# precompute the parameters to be used
-function FFCT_precompute()
+@inline @inbounds function set_zeros!(a::AbstractArray{T}) where{T <: Number}
+    return fill!(a, zero(T))
+end
 
-    return k_x, k_y, r_z, k_mat, kx_mat, ky_mat
+# precompute the parameters to be used
+function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USeriesPara{T}, M_mid::Int) where{T}
+    L_x, L_y, L_z = L
+    N_x, N_y, N_z = N_grid
+    k_x = Vector{T}([2π * i / L_x for i in -N_x:N_x])
+    k_y = Vector{T}([2π * i / L_y for i in -N_y:N_y])
+    r_z = Vector{T}([L_z / 2 * ( 1.0 - cos((2i - 1)*π / 2N_z) ) for i in 1:N_z])
+    
+    k_mat = zeros(T, 2N_x + 1, 2N_y + 1)
+    kx_mat = zeros(T, 2N_x + 1, 2N_y + 1)
+    ky_mat = zeros(T, 2N_x + 1, 2N_y + 1)
+
+    for i in 1:2N_x + 1, j in 1:2N_y + 1
+        k_mat[i, j] = sqrt(k_x[i]^2 + k_y[j]^2)
+        kx_mat[i, j] = k_x[i]
+        ky_mat[i, j] = k_y[j]
+    end
+
+    # xy k space grid, z real space grid
+    H_r = zeros(Complex{T}, 2N_x + 1, 2N_y + 1, N_z)
+    # xy k space grid, z ChebCoefs
+    H_c = zeros(Complex{T}, 2N_x + 1, 2N_y + 1, N_z)
+    # solution to the linear eqs, xy k space grid, z ChebCoefs
+    H_s = zeros(Complex{T}, 2N_x + 1, 2N_y + 1, N_z)
+
+    M = length(uspara.sw)
+    M_range = M - M_mid
+    us_mat = zeros(T, 2N_x + 1, 2N_y + 1, M_range)
+    for l in 1:M_range
+        sl, wl = uspara.sw[l + M_mid]
+        us_mat[:, :, l] = exp.( - sl^2 .* k_mat.^2 ./ 4)
+    end
+
+    # the boundary condition at z = 0 and z = L_z
+    b_l = zeros(Complex{T}, 2N_x + 1, 2N_y + 1)
+    b_u = zeros(Complex{T}, 2N_x + 1, 2N_y + 1)
+
+    rhs = zeros(Complex{T}, N_z + 2)
+    sol = zeros(Complex{T}, N_z + 2)
+    
+    return k_x, k_y, r_z, us_mat, H_r, H_c, H_s, b_l, b_u, rhs, sol
 end
 
 # precompute the inverse matrix
