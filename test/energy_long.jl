@@ -8,10 +8,10 @@
     poses = [tuple(L .* rand(3)...) for i in 1:n_atoms]
 
     # using the 3DFFT
-    N_grid = (16, 16, 16)
+    N_grid = (16, 18, 10)
     uspara = USeriesPara(2)
     soepara = SoePara16()
-    M_mid = 3
+    M_mid = 8
 
     k_x, k_y, r_z, us_mat, H_r, H_c, H_s, ivsm, b_l, b_u, rhs, sol, sort_z, z = FFCT_precompute(L, N_grid, USeriesPara(2), M_mid, n_atoms)
 
