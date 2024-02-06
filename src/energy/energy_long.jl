@@ -31,7 +31,7 @@ function energy_long(
     revise_z!(z, sort_z, poses)
     E_0 = zeroth_order(qs, z, soepara, uspara, sort_z, L, M_mid)
 
-    @debug "long range energy, FFCT" Ek, E0
+    @debug "long range energy, FFCT" E_k, E_0
 
     return E_k + E_0
 end
