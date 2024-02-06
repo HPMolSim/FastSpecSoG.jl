@@ -35,7 +35,7 @@ function energy_mid(qs::Vector{T}, poses::Vector{NTuple{3, T}}, gridinfo::GridIn
     fft!(gridbox)
     scale!(gridbox, scalefactor)
     ifft!(gridbox)
-    E = gather(qs, poses, gridinfo, gridbox, cheb_coefs)
+    E = gather(qs, poses, gridinfo, gridbox, cheb_coefs) / 2
 
     return E
 end

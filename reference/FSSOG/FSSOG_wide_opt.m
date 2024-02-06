@@ -219,7 +219,8 @@ for t=1:N3
         else
            flag=1;
         end
-        phi(t)=phi(t)+sum(sum(1/(Lx*Ly)*flag.*coef_Phi(:,:,k).*ChebPoly(k-1,zt,domain).*exp(1i.*(k_x_temp.*xt+k_y_temp.*yt))));
+        phi(t)=phi(t)+sum(sum(1/(Lx*Ly)*flag.*coef_Phi(:,:,k) .* cos((k - 1) * acos(zt / domain)) .* exp(1i.*(k_x_temp.*xt+k_y_temp.*yt))));
+        % .*ChebPoly(k-1,zt,domain)
     end
 end
 

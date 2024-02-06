@@ -24,8 +24,8 @@ end
 function interpolate_nu!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, k_x::Vector{T}, k_y::Vector{T}, r_z::Vector{T}, us_mat::Array{T, 3}, H_r::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     set_zeros!(H_r)
-    for i in 1:length(q)
-        int_nu_single!(qs[i], poses[i], k_x, k_y, r_z, us_mat, H_r, uspara, M_mid)
+    for i in 1:length(qs)
+        interpolate_nu_single!(qs[i], poses[i], k_x, k_y, r_z, us_mat, H_r, uspara, M_mid)
     end
 
     return H_r
@@ -36,7 +36,8 @@ end
     set_zeros!(H_c)
     N_z = size(H_r, 3)
     for i in 1:size(H_r, 1), j in 1:size(H_r, 2), k in 1:N_z, l in 1:N_z
-        H_c[i, j, k] += 2 / N_z * H_r[i, j, l] * cos((k - 1)* acos(r_z[l] / (L_z / 2) - 1.0))
+        H_c[i, j, k] += 2 / N_z * H_r[i, j, l] * chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
+        # cos((k - 1)* acos(r_z[l] / (L_z / 2) - 1.0))
     end
 
     return H_c

@@ -4,8 +4,12 @@
     return fill!(a, zero(T))
 end
 
+@inline function chebpoly(n::Int, x::T, scale::T) where{T}
+    return cos(n * acos(x / scale))
+end
+
 # precompute the parameters to be used
-function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USeriesPara{T}, M_mid::Int) where{T}
+function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USeriesPara{T}, M_mid::Int, n_atoms::Int) where{T}
     L_x, L_y, L_z = L
     N_x, N_y, N_z = N_grid
     k_x = Vector{T}([2π * i / L_x for i in -N_x:N_x])
@@ -37,14 +41,19 @@ function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USerie
         us_mat[:, :, l] = exp.( - sl^2 .* k_mat.^2 ./ 4)
     end
 
+    ivsm = inverse_mat(N_grid, L[3], k_x, k_y)
+
     # the boundary condition at z = 0 and z = L_z
     b_l = zeros(Complex{T}, 2N_x + 1, 2N_y + 1)
     b_u = zeros(Complex{T}, 2N_x + 1, 2N_y + 1)
 
     rhs = zeros(Complex{T}, N_z + 2)
     sol = zeros(Complex{T}, N_z + 2)
+
+    sort_z = zeros(Int, n_atoms)
+    z = zeros(T, n_atoms)
     
-    return k_x, k_y, r_z, us_mat, H_r, H_c, H_s, b_l, b_u, rhs, sol
+    return k_x, k_y, r_z, us_mat, H_r, H_c, H_s, ivsm, b_l, b_u, rhs, sol, sort_z, z
 end
 
 # precompute the inverse matrix

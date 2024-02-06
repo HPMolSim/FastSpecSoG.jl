@@ -28,3 +28,74 @@ function long_energy_naive_k(K::NTuple{3, T}, interaction::FSSoG_naive{T}, posit
 
     return energy_k * π / (2 * interaction.L[1] * interaction.L[2])
 end
+
+function long_energy_sw_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::Int, L::NTuple{3, T}, s::T, w::T) where{T}
+
+    E = zero(T)
+    n_atoms = length(qs)
+
+    for i in 1:n_atoms
+        qi = qs[i]
+        xi, yi, zi = poses[i]
+
+        for j in 1:n_atoms
+            ϕ_ij = zero(T)
+            qj = qs[j]
+            xj, yj, zj = poses[j]
+
+            for m_x in -cutoff:cutoff
+                kx = 2π * m_x / L[1]
+                for m_y in -cutoff:cutoff
+                    ky = 2π * m_y / L[2]
+                    k = sqrt(kx^2 + ky^2)
+                    if k != 0
+                        ϕ_ij += w * s^2 * exp( - (zi - zj)^2 / s^2) * exp(-s^2 * k^2 / 4) * cos(kx * (xi - xj) + ky * (yi - yj))
+                    end
+                end
+            end
+
+            E += qi * qj * ϕ_ij
+        end
+    end
+
+    return E * π / (2 * L[1] * L[2])
+end
+
+function long_energy_sw_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, s::T, w::T) where{T}
+
+    E = zero(T)
+    n_atoms = length(qs)
+
+    for i in 1:n_atoms
+        qi = qs[i]
+        xi, yi, zi = poses[i]
+
+        for j in 1:n_atoms
+            qj = qs[j]
+            xj, yj, zj = poses[j]
+
+            ϕ_ij = w * s^2 * exp( - (zi - zj)^2 / s^2)
+
+            E += qi * qj * ϕ_ij
+        end
+    end
+
+    return E * π / (2 * L[1] * L[2])
+end
+
+function long_energy_us(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::Int, L::NTuple{3, T}, uspara::USeriesPara{T}, M_min::Int, M_max::Int) where{T}
+    @assert M_min ≥ 1
+    @assert M_max ≤ length(uspara.sw)
+
+    Ek = zero(T)
+    E0 = zero(T)
+
+    for l in M_min:M_max
+        s, w = uspara.sw[l]
+        Ek += long_energy_sw_k(qs, poses, cutoff, L, s, w)
+        E0 += long_energy_sw_0(qs, poses, L, s, w)
+    end
+    @debug "long range energy, direct sum" Ek, E0
+
+    return Ek + E0
+end
