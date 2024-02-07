@@ -1,4 +1,7 @@
 @testset "test energy naive" begin
+
+    @info "testing the energy naive"
+
     n_atoms = 100
     L = 100.0
     boundary = ExTinyMD.Q2dBoundary(L, L, L)
@@ -23,14 +26,5 @@
     FastSpecSoG_neighbor = CellList3D(info, FastSpecSoG_interaction.r_c, boundary, 1)
     energy_sog = energy_naive(FastSpecSoG_interaction, FastSpecSoG_neighbor, info, atoms)
 
-    # coords = [p_info.position for p_info in info.particle_info]
-    # charge = [atoms[p_info.id].charge for p_info in info.particle_info]
-    # N_real = 200
-    # N_img = 0
-    # sys_q2d = SysQ2D((0.0, 0.0), (L, L, L), N_real, N_img, ϵ = 1.0)
-    # ref_pos, ref_charge = SysQ2DInit(sys_q2d, coords, charge)
-    # energy_icm = Energy_Q2D(sys_q2d, coords, charge, ref_pos, ref_charge)
-
-    @show abs(energy_ewald - energy_sog)
     @test abs(energy_ewald - energy_sog) < 1e-4
 end
