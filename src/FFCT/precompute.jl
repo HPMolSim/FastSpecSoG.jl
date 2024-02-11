@@ -46,6 +46,8 @@ function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USerie
     # the boundary condition at z = 0 and z = L_z
     b_l = zeros(Complex{T}, 2N_x + 1, 2N_y + 1)
     b_u = zeros(Complex{T}, 2N_x + 1, 2N_y + 1)
+    phase_x = zeros(Complex{T}, 2N_x + 1)
+    phase_y = zeros(Complex{T}, 2N_y + 1)
 
     rhs = zeros(Complex{T}, N_z + 2)
     sol = zeros(Complex{T}, N_z + 2)
@@ -53,7 +55,27 @@ function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USerie
     sort_z = zeros(Int, n_atoms)
     z = zeros(T, n_atoms)
     
-    return k_x, k_y, r_z, us_mat, H_r, H_c, H_s, ivsm, b_l, b_u, rhs, sol, sort_z, z
+    return k_x, k_y, r_z, us_mat, H_r, H_c, H_s, ivsm, b_l, b_u, phase_x, phase_y, rhs, sol, sort_z, z
+end
+
+@inbounds function revise_phase_neg!(phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, k_x::Vector{T}, k_y::Vector{T}, x::T, y::T) where{T}
+
+    for i in 1:length(k_x)
+        phase_x[i] = exp(-T(1)im * k_x[i] * x)
+        phase_y[i] = exp(-T(1)im * k_y[i] * y)
+    end
+
+    return nothing
+end
+
+@inbounds function revise_phase_pos!(phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, k_x::Vector{T}, k_y::Vector{T}, x::T, y::T) where{T}
+
+    for i in 1:length(k_x)
+        phase_x[i] = exp(T(1)im * k_x[i] * x)
+        phase_y[i] = exp(T(1)im * k_y[i] * y)
+    end
+
+    return nothing
 end
 
 # precompute the inverse matrix
