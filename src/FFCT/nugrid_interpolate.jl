@@ -2,23 +2,25 @@
 
     x, y, z = pos
     revise_phase_neg!(phase_x, phase_y, k_x, k_y, x, y)
-    for i in 1:size(H_r, 1), j in 1:size(H_r, 2)
-        k_xi = k_x[i]
-        k_yj = k_y[j]
-        phase = phase_x[i] * phase_y[j]
 
-        for k in 1:size(H_r, 3)
-            r_zk = r_z[k]
-            val = zero(T)
+    for k in 1:size(H_r, 3)
+        r_zk = r_z[k]
+        for l in M_mid + 1:length(uspara.sw)
+            sl, wl = uspara.sw[l]
+            exp_temp = exp(- (z - r_zk)^2 / sl^2)
+            z_temp = T(2) - T(4) * (z - r_zk)^2 / sl^2
 
-            for l in M_mid + 1:length(uspara.sw)
-                sl, wl = uspara.sw[l]
-                val += wl * (T(2) - T(4) * (z - r_zk)^2 / sl^2 + (k_xi^2 + k_yj^2) * sl^2) * exp(- (z - r_zk)^2 / sl^2) * us_mat[i, j, l - M_mid]
+            for j in 1:size(H_r, 2)
+                k_yj = k_y[j]
+                phase_yj = phase_y[j]
+                for i in 1:size(H_r, 1)
+                    k_xi = k_x[i]
+                    phase = phase_x[i] * phase_yj
+                    H_r[i, j, k] += q * π * phase * (z_temp + (k_xi^2 + k_yj^2) * sl^2) * exp_temp * us_mat[i, j, l - M_mid]
+                end
             end
-
-            H_r[i, j, k] += q * π * phase * val
         end
-    end 
+    end
 
     return H_r
 end
@@ -37,8 +39,12 @@ end
 
     set_zeros!(H_c)
     N_z = size(H_r, 3)
-    for i in 1:size(H_r, 1), j in 1:size(H_r, 2), k in 1:N_z, l in 1:N_z
-        H_c[i, j, k] += 2 / N_z * H_r[i, j, l] * chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
+
+    for k in 1:N_z, l in 1:N_z
+        cheb_temp = chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
+        for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
+            H_c[i, j, k] += 2 / N_z * H_r[i, j, l] * cheb_temp
+        end
     end
 
     return H_c

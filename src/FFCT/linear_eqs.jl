@@ -1,28 +1,36 @@
-@inbounds function boundaries_single!(q::T, pos::NTuple{3, T}, b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, k_x::Vector{T}, k_y::Vector{T}, L_z::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
+@inbounds function boundaries_single!(q::T, pos::NTuple{3, T}, b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, k_x::Vector{T}, k_y::Vector{T}, phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, L_z::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     x, y, z = pos
-    for i in 1:size(b_l, 1), j in 1:size(b_l, 2)
-        k_xi = k_x[i]
-        k_yj = k_y[j]
-        phase = exp( - T(1)im * (k_xi * x + k_yj * y))
-        for l in M_mid + 1:length(uspara.sw)
-            sl, wl = uspara.sw[l]
-            temp = q * π * wl * sl^2 * exp(-sl^2 * (k_xi^2 + k_yj^2) / 4) * phase
-            b_l[i, j] += temp * exp(- z^2  / sl^2)
-            b_u[i, j] += temp * exp(- (L_z - z)^2  / sl^2)
+
+    revise_phase_neg!(phase_x, phase_y, k_x, k_y, x, y)
+
+    for l in M_mid + 1:length(uspara.sw)
+        sl, wl = uspara.sw[l]
+        temp = q * π * wl * sl^2
+        temp_l = temp * exp(- z^2  / sl^2)
+        temp_u = temp * exp(- (L_z - z)^2  / sl^2)
+        for j in size(b_l, 2)
+            k_yj = k_y[j]
+            for i in 1:size(b_l, 1)
+                k_xi = k_x[i]
+                phase = phase_x[i] * phase_y[j]
+                exp_temp = exp(-sl^2 * (k_xi^2 + k_yj^2) / 4)
+                b_l[i, j] += temp_l * exp_temp * phase
+                b_u[i, j] += temp_u * exp_temp * phase
+            end
         end
     end
 
     return b_l, b_u
 end
 
-function boundaries!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, k_x::Vector{T}, k_y::Vector{T}, L_z::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
+function boundaries!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, k_x::Vector{T}, k_y::Vector{T}, phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, L_z::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     set_zeros!(b_l)
     set_zeros!(b_u)
 
     for i in 1:length(qs)
-        boundaries_single!(qs[i], poses[i], b_l, b_u, k_x, k_y, L_z, uspara, M_mid)
+        boundaries_single!(qs[i], poses[i], b_l, b_u, k_x, k_y, phase_x, phase_y, L_z, uspara, M_mid)
     end
 
     return b_l, b_u

@@ -23,7 +23,7 @@ function energy_long(
 
     @assert M_mid ≤ length(uspara.sw)
 
-    b_l, b_u = boundaries!(qs, poses, b_l, b_u, k_x, k_y, L[3], uspara, M_mid)
+    b_l, b_u = boundaries!(qs, poses, b_l, b_u, k_x, k_y, phase_x, phase_y, L[3], uspara, M_mid)
     H_r = interpolate_nu!(qs, poses, k_x, k_y, phase_x, phase_y, r_z, us_mat, H_r, uspara, M_mid)
     H_c = real2Cheb!(H_r, H_c, r_z, L[3])
     H_s = solve_eqs!(rhs, sol, H_c, H_s, b_l, b_u, ivsm, L[3])

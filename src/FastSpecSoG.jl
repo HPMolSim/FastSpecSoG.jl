@@ -1,6 +1,6 @@
 module FastSpecSoG
 
-using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, SumOfExpVPMR
+using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, SumOfExpVPMR, LoopVectorization
 
 export USeriesPara, U_series, BSA
 export FSSoG_naive

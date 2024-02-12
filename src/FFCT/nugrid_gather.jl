@@ -4,13 +4,18 @@
     ϕ = zero(Complex{T})
     
     revise_phase_pos!(phase_x, phase_y, k_x, k_y, x, y)
-    
-    for i in 1:size(H_s, 1), j in 1:size(H_s, 2)
-        phase = phase_x[i] * phase_y[j]
 
+    # k = 1
+    for j in 1:size(H_s, 2), i in 1:size(H_s, 1)
+        phase = phase_x[i] * phase_y[j]
         ϕ += H_s[i, j, 1] * phase / T(2)
-        for k in 2:size(H_s, 3)
-            ϕ += H_s[i, j, k] * phase * chebpoly(k - 1, z - L_z / T(2), L_z / T(2))
+    end
+
+    for k in 2:size(H_s, 3)
+        cheb_temp = chebpoly(k - 1, z - L_z / T(2), L_z / T(2))
+        for j in 1:size(H_s, 2), i in 1:size(H_s, 1)
+            phase = phase_x[i] * phase_y[j]
+            ϕ += H_s[i, j, k] * phase * cheb_temp
         end
     end
 

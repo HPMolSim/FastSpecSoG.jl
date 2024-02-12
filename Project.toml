@@ -8,6 +8,7 @@ ChebParticleMesh = "1983ef0c-217d-4026-99b0-9163e7750d85"
 Enzyme = "7da242da-08ed-463a-9acd-ee780be4f1d9"
 ExTinyMD = "fec76197-d59f-46dd-a0ed-76a83c21f7aa"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+LoopVectorization = "bdcacae8-1622-11e9-2a5c-532679323890"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 SumOfExpVPMR = "2c69873a-e0bb-44e1-90b4-d15ac3b7e936"
 
