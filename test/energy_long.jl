@@ -16,7 +16,7 @@
     k_x, k_y, r_z, us_mat, H_r, H_c, H_s, ivsm, b_l, b_u, phase_x, phase_y, rhs, sol, sort_z, z = FFCT_precompute(L, N_grid, USeriesPara(2), M_mid, n_atoms)
 
     @info "running the FFCT for the long range part of the energy"
-    E_FFCT = energy_long(qs, poses, L, M_mid, k_x, k_y, r_z, phase_x, phase_y, z, sort_z, us_mat, b_l, b_u, rhs, sol, ivsm, H_r, H_c, H_s, uspara, soepara)
+    E_FFCT = energy_long(qs, poses, L, N_grid, M_mid, k_x, k_y, r_z, phase_x, phase_y, z, sort_z, us_mat, b_l, b_u, rhs, sol, ivsm, H_r, H_c, H_s, uspara, soepara)
 
     @info "running the direct summation for the long range part of the energy"
     # using the direct summation

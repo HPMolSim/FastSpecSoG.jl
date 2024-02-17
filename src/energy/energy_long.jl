@@ -11,7 +11,7 @@
 # 5. gather the energy
 
 function energy_long(
-    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, M_mid::Int, 
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, N_grid::NTuple{3, Int}, M_mid::Int, 
     k_x::Vector{T}, k_y::Vector{T}, r_z::Vector{T}, 
     phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}},
     z::Vector{T}, sort_z::Vector{Int}, 
@@ -24,7 +24,7 @@ function energy_long(
     @assert M_mid ≤ length(uspara.sw)
 
     b_l, b_u = boundaries!(qs, poses, b_l, b_u, k_x, k_y, phase_x, phase_y, L[3], uspara, M_mid)
-    H_r = interpolate_nu!(qs, poses, k_x, k_y, phase_x, phase_y, r_z, us_mat, H_r, uspara, M_mid)
+    H_r = interpolate_nu!(qs, poses, N_grid, L, k_x, k_y, phase_x, phase_y, r_z, us_mat, H_r, uspara, M_mid)
     H_c = real2Cheb!(H_r, H_c, r_z, L[3])
     H_s = solve_eqs!(rhs, sol, H_c, H_s, b_l, b_u, ivsm, L[3])
     E_k = gather_nu(qs, poses, L, k_x, k_y, phase_x, phase_y, H_s)
