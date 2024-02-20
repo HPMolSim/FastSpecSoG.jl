@@ -49,30 +49,50 @@ function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USerie
     phase_x = zeros(Complex{T}, 2N_x + 1)
     phase_y = zeros(Complex{T}, 2N_y + 1)
 
+    phase_xs = zeros(Complex{T}, 2N_x + 1, n_atoms)
+    phase_ys = zeros(Complex{T}, 2N_y + 1, n_atoms)
+    phase_xys = zeros(Complex{T}, 2N_x + 1, 2N_y + 1, n_atoms)
+
     rhs = zeros(Complex{T}, N_z + 2)
     sol = zeros(Complex{T}, N_z + 2)
 
     sort_z = zeros(Int, n_atoms)
     z = zeros(T, n_atoms)
+
+    size_dict = Dict('i' => 2N_x + 1, 'j' => 2N_y + 1, 'k' => N_z, 'l' => M_range, 'n' => n_atoms)
+    temp_ijlk = zeros(Complex{T}, (size_dict['i'], size_dict['j'], size_dict['l'], size_dict['k']))
+    temp_ijl = zeros(Complex{T}, (size_dict['i'], size_dict['j'], size_dict['l']))
+    z_coef = zeros(T, M_range, N_z, n_atoms)
+    exp_coef = zeros(T, M_range, N_z, n_atoms)
     
-    return k_x, k_y, r_z, us_mat, H_r, H_c, H_s, ivsm, b_l, b_u, phase_x, phase_y, rhs, sol, sort_z, z
+    return k_x, k_y, k_mat, r_z, Complex{T}.(us_mat), H_r, H_c, H_s, ivsm, b_l, b_u, phase_x, phase_y, phase_xs, phase_ys, phase_xys, rhs, sol, sort_z, z, size_dict, temp_ijlk, temp_ijl, z_coef, exp_coef
 end
 
-@inbounds function revise_phase_neg!(phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, k_x::Vector{T}, k_y::Vector{T}, x::T, y::T) where{T}
+@inbounds function revise_phase_neg!(phase_x::AbstractArray{Complex{T}, 1}, phase_y::AbstractArray{Complex{T}, 1}, k_x::Vector{T}, k_y::Vector{T}, x::T, y::T) where{T}
 
-    for i in 1:length(k_x)
-        phase_x[i] = exp(-T(1)im * k_x[i] * x)
-        phase_y[i] = exp(-T(1)im * k_y[i] * y)
-    end
+    phase_x .= exp.(-T(1)im .* k_x .* x)
+    phase_y .= exp.(-T(1)im .* k_y .* y)
 
     return nothing
 end
 
-@inbounds function revise_phase_pos!(phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, k_x::Vector{T}, k_y::Vector{T}, x::T, y::T) where{T}
+@inbounds function revise_phase_pos!(phase_x::AbstractArray{Complex{T}, 1}, phase_y::AbstractArray{Complex{T}, 1}, k_x::Vector{T}, k_y::Vector{T}, x::T, y::T) where{T}
 
-    for i in 1:length(k_x)
-        phase_x[i] = exp(T(1)im * k_x[i] * x)
-        phase_y[i] = exp(T(1)im * k_y[i] * y)
+    phase_x .= exp.(T(1)im .* k_x .* x)
+    phase_y .= exp.(T(1)im .* k_y .* y)
+
+    return nothing
+end
+
+@inbounds function revise_phase_neg_all!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, phase_xs::Array{Complex{T}, 2}, phase_ys::Array{Complex{T}, 2}, phase_xys::Array{Complex{T}, 3}, k_x::Vector{T}, k_y::Vector{T}) where{T}
+
+    for n in 1:size(poses, 1)
+        x, y, z = poses[n]
+        revise_phase_neg!((@view phase_xs[:, n]), (@view phase_ys[:, n]), k_x, k_y, x, y)
+    end
+
+    for n in 1:size(phase_xys, 3), j in 1:size(phase_xys, 2), i in 1:size(phase_xys, 1)
+        phase_xys[i, j, n] = phase_xs[i, n] * phase_ys[j, n] * qs[n]
     end
 
     return nothing

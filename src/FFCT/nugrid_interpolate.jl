@@ -2,13 +2,64 @@
     return T(2π * (i - 1 - N) / L)
 end
 
+
+@inbounds function revise_z_coef!(z_coef::Array{T, 3}, exp_coef::Array{T, 3}, r_z::Vector{T}, poses::Vector{NTuple{3, T}}, uspara::USeriesPara{T}, M_mid::Int) where{T}
+
+    for n in 1:size(poses, 1)
+        x, y, z = poses[n]
+        for k in 1:size(r_z, 1)
+            r_zk = r_z[k]
+            for l in M_mid + 1:length(uspara.sw)
+                sl, wl = uspara.sw[l]
+                temp_z = (z - r_zk)^2 / sl^2
+                temp_exp = exp(-temp_z)
+                exp_coef[l - M_mid, k, n] = temp_exp
+                z_coef[l - M_mid, k, n] = (T(2) - T(4) * temp_z) * temp_exp * sl^2
+            end
+        end
+    end
+
+    return nothing
+end
+
+
 """
-H_1[i, j, k] := phase_x[i] * z_temp[l, k] * exp[l, k] * us_x[i, l] * us_y[j, l] * phase_y[j]
-H_2[i, j, k] := phase_x[i] * kx[i, k] * exp[l, k] * us_x[i, l] * us_y[j, l] * phase_y[j]
-H_3[i, j, k] := phase_x[i] * ky[j, k] * exp[l, k] * us_x[i, l] * us_y[j, l] * phase_y[j]
+H1[i, j, k] := phase_xys[i, j, n] * z_coef[l, k, n] * us_mat[i, j, l]
+H2[i, j, k] := phase_xys[i, j, n] * exp_coef[l, k, n] * k_mat[i, j] * us_mat[i, j, l]
 """
 
-@inbounds function interpolate_nu_single!(q::T, pos::NTuple{3, T}, N::NTuple{3, Int}, L::NTuple{3, T}, k_x::Vector{T}, k_y::Vector{T}, phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, r_z::Vector{T}, us_mat::Array{T, 3}, H_r::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int) where{T}
+@inbounds function interpolate_nu_einsum!(
+    H_r::Array{Complex{T}, 3},
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, 
+    k_x::Vector{T}, k_y::Vector{T}, k_mat::Array{T, 2}, 
+    phase_xs::Array{Complex{T}, 2}, phase_ys::Array{Complex{T}, 2}, phase_xys::Array{Complex{T}, 3}, 
+    z_coef::Array{T, 3}, exp_coef::Array{T, 3}, temp_ijlk::Array{Complex{T}, 4}, temp_ijl::Array{Complex{T}, 3},
+    r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int,  
+    size_dict::Dict{Char, Int64}) where{T}
+
+    revise_phase_neg_all!(qs, poses, phase_xs, phase_ys, phase_xys, k_x, k_y)
+    revise_z_coef!(z_coef, exp_coef, r_z, poses, uspara, M_mid)
+
+    # H1
+    einsum!(ein"ijn, lkn -> ijlk", (phase_xys, z_coef), temp_ijlk, true, false, size_dict)
+    einsum!(ein"ijlk, ijl -> ijk", (temp_ijlk, us_mat), H_r, true, false, size_dict)
+
+    # H2
+    einsum!(ein"ijn, lkn -> ijlk", (phase_xys, exp_coef), temp_ijlk, true, false, size_dict)
+    einsum!(ein"ij, ijl -> ijl", (k_mat, us_mat), temp_ijl, true, false, size_dict)
+    einsum!(ein"ijlk, ijl -> ijk", (temp_ijlk, temp_ijl), H_r, true, true, size_dict)
+
+    H_r .*= π
+
+    return H_r
+end
+
+@inbounds function interpolate_nu_loop_single!(
+    H_r::Array{Complex{T}, 3},
+    q::T, pos::NTuple{3, T}, 
+    N::NTuple{3, Int}, L::NTuple{3, T}, k_x::Vector{T}, k_y::Vector{T}, 
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
+    r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     x, y, z = pos
     revise_phase_neg!(phase_x, phase_y, k_x, k_y, x, y)
@@ -35,11 +86,16 @@ H_3[i, j, k] := phase_x[i] * ky[j, k] * exp[l, k] * us_x[i, l] * us_y[j, l] * ph
     return H_r
 end
 
-function interpolate_nu!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, N::NTuple{3, Int}, L::NTuple{3, T}, k_x::Vector{T}, k_y::Vector{T}, phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, r_z::Vector{T}, us_mat::Array{T, 3}, H_r::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int) where{T}
+function interpolate_nu_loop!(
+    H_r::Array{Complex{T}, 3},
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, 
+    N::NTuple{3, Int}, L::NTuple{3, T}, k_x::Vector{T}, k_y::Vector{T}, 
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
+    r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     set_zeros!(H_r)
     for i in 1:length(qs)
-        interpolate_nu_single!(qs[i], poses[i], N, L, k_x, k_y, phase_x, phase_y, r_z, us_mat, H_r, uspara, M_mid)
+        interpolate_nu_loop_single!(H_r, qs[i], poses[i], N, L, k_x, k_y, phase_x, phase_y, r_z, us_mat, uspara, M_mid)
     end
 
     return H_r
