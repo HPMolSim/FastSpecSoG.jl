@@ -5,18 +5,9 @@
     
     revise_phase_pos!(phase_x, phase_y, k_x, k_y, x, y)
 
-    # k = 1
-    for j in 1:size(H_s, 2), i in 1:size(H_s, 1)
-        phase = phase_x[i] * phase_y[j]
-        ϕ += H_s[i, j, 1] * phase / T(2)
-    end
-
-    for k in 2:size(H_s, 3)
-        cheb_temp = chebpoly(k - 1, z - L_z / T(2), L_z / T(2))
-        for j in 1:size(H_s, 2), i in 1:size(H_s, 1)
-            phase = phase_x[i] * phase_y[j]
-            ϕ += H_s[i, j, k] * phase * cheb_temp
-        end
+    for k in 1:size(H_s, 3)
+        cheb_val = k == 1 ? T(0.5) : chebpoly(k - 1, z - L_z / T(2), L_z / T(2))
+        ϕ += dot(phase_x, (@view H_s[:, :, k]), phase_y)* cheb_val
     end
 
     return q * ϕ / (2 * L_x * L_y)

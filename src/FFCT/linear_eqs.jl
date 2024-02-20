@@ -1,4 +1,9 @@
-@inbounds function boundaries_single!(q::T, pos::NTuple{3, T}, b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, k_x::Vector{T}, k_y::Vector{T}, phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, L_z::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
+@inbounds function boundaries_single!(
+    q::T, pos::NTuple{3, T}, 
+    b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, 
+    k_x::Vector{T}, k_y::Vector{T}, us_mat::Array{Complex{T}, 3},
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
+    L_z::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     x, y, z = pos
 
@@ -10,11 +15,9 @@
         temp_l = temp * exp(- z^2  / sl^2)
         temp_u = temp * exp(- (L_z - z)^2  / sl^2)
         for j in size(b_l, 2)
-            k_yj = k_y[j]
             for i in 1:size(b_l, 1)
-                k_xi = k_x[i]
                 phase = phase_x[i] * phase_y[j]
-                exp_temp = exp(-sl^2 * (k_xi^2 + k_yj^2) / 4)
+                exp_temp = us_mat[i, j, l - M_mid]
                 b_l[i, j] += temp_l * exp_temp * phase
                 b_u[i, j] += temp_u * exp_temp * phase
             end
@@ -24,13 +27,18 @@
     return b_l, b_u
 end
 
-function boundaries!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, k_x::Vector{T}, k_y::Vector{T}, phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, L_z::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
+function boundaries!(
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, 
+    b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, 
+    k_x::Vector{T}, k_y::Vector{T}, us_mat::Array{Complex{T}, 3},
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
+    L_z::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     set_zeros!(b_l)
     set_zeros!(b_u)
 
     for i in 1:length(qs)
-        boundaries_single!(qs[i], poses[i], b_l, b_u, k_x, k_y, phase_x, phase_y, L_z, uspara, M_mid)
+        boundaries_single!(qs[i], poses[i], b_l, b_u, k_x, k_y, us_mat, phase_x, phase_y, L_z, uspara, M_mid)
     end
 
     return b_l, b_u
@@ -43,7 +51,7 @@ end
     N_x = Int((size(H_c, 1) - 1)/2)
     N_y = Int((size(H_c, 2) - 1)/2)
     N_z = size(H_c, 3)
-    for i in 1:size(H_c, 1), j in 1:size(H_c, 2)
+    for j in 1:size(H_c, 2), i in 1:size(H_c, 1)
         if !((i == N_x + 1) && (j == N_y + 1))
             for l in 1:N_z
                 rhs[l] = - H_c[i, j, l]
@@ -51,10 +59,7 @@ end
             rhs[N_z + 1] = b_l[i, j]
             rhs[N_z + 2] = b_u[i, j]
 
-            set_zeros!(sol)
-            for m in 1:N_z + 2, n in 1:N_z + 2
-                sol[m] += ivsm[m, n, i, j] * rhs[n]
-            end
+            mul!(sol, (@view ivsm[:, :, i, j]), rhs, true, false)
 
             H_s[i, j, 1] = T(2) * sol[N_z + 1]
             H_s[i, j, 2] = L_z^2 * (sol[2] - sol[4]) / T(32) + L_z * sol[N_z + 2] / T(2)
