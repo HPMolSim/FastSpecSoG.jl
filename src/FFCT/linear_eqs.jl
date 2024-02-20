@@ -43,7 +43,7 @@ end
     N_x = Int((size(H_c, 1) - 1)/2)
     N_y = Int((size(H_c, 2) - 1)/2)
     N_z = size(H_c, 3)
-    for i in 1:size(H_c, 1), j in 1:size(H_c, 2)
+    for j in 1:size(H_c, 2), i in 1:size(H_c, 1)
         if !((i == N_x + 1) && (j == N_y + 1))
             for l in 1:N_z
                 rhs[l] = - H_c[i, j, l]
@@ -51,10 +51,7 @@ end
             rhs[N_z + 1] = b_l[i, j]
             rhs[N_z + 2] = b_u[i, j]
 
-            set_zeros!(sol)
-            for m in 1:N_z + 2, n in 1:N_z + 2
-                sol[m] += ivsm[m, n, i, j] * rhs[n]
-            end
+            mul!(sol, (@view ivsm[:, :, i, j]), rhs, true, false)
 
             H_s[i, j, 1] = T(2) * sol[N_z + 1]
             H_s[i, j, 2] = L_z^2 * (sol[2] - sol[4]) / T(32) + L_z * sol[N_z + 2] / T(2)

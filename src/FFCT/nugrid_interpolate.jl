@@ -2,6 +2,12 @@
     return T(2π * (i - 1 - N) / L)
 end
 
+"""
+H_1[i, j, k] := phase_x[i] * z_temp[l, k] * exp[l, k] * us_x[i, l] * us_y[j, l] * phase_y[j]
+H_2[i, j, k] := phase_x[i] * kx[i, k] * exp[l, k] * us_x[i, l] * us_y[j, l] * phase_y[j]
+H_3[i, j, k] := phase_x[i] * ky[j, k] * exp[l, k] * us_x[i, l] * us_y[j, l] * phase_y[j]
+"""
+
 @inbounds function interpolate_nu_single!(q::T, pos::NTuple{3, T}, N::NTuple{3, Int}, L::NTuple{3, T}, k_x::Vector{T}, k_y::Vector{T}, phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, r_z::Vector{T}, us_mat::Array{T, 3}, H_r::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     x, y, z = pos
