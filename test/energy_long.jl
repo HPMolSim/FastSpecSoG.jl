@@ -30,6 +30,6 @@
     @show E_FFCT_loop_k, E_FFCT_einsum_k, E_direct_k
     @test E_FFCT_0 ≈ E_direct_0
     @test E_FFCT_einsum_k ≈ E_FFCT_loop_k
-    @test isapprox(E_FFCT_loop_k, E_direct_k, atol=1e-4)
-    @test isapprox(E_FFCT_einsum_k, E_direct_k, atol=1e-4)
+    @test isapprox(E_FFCT_loop_k, E_direct_k, atol=1e-8)
+    @test isapprox(E_FFCT_einsum_k, E_direct_k, atol=1e-8)
 end

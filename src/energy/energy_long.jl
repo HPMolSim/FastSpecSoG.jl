@@ -48,7 +48,7 @@ function energy_long_einsum_k(
     @assert M_mid ≤ length(uspara.sw)
 
     b_l, b_u = boundaries!(qs, poses, L, b_l, b_u, k_x, k_y, us_mat, phase_x, phase_y, L[3], uspara, M_mid)
-    H_r = interpolate_nu_einsum!(H_r, qs, poses, k_x, k_y, k_mat, phase_xs, phase_ys, phase_xys, z_coef, exp_coef, temp_ijlk, temp_ijl, r_z, us_mat, uspara, M_mid, size_dict)
+    H_r = interpolate_nu_einsum!(H_r, qs, poses, L, k_x, k_y, k_mat, phase_xs, phase_ys, phase_xys, z_coef, exp_coef, temp_ijlk, temp_ijl, r_z, us_mat, uspara, M_mid, size_dict)
     H_c = real2Cheb!(H_r, H_c, r_z, L[3])
     H_s = solve_eqs!(rhs, sol, H_c, H_s, b_l, b_u, ivsm, L[3])
     E_k = gather_nu(qs, poses, L, k_x, k_y, phase_x, phase_y, H_s)

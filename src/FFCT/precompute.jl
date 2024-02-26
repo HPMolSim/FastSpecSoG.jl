@@ -21,7 +21,7 @@ function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USerie
     ky_mat = zeros(T, 2N_x + 1, 2N_y + 1)
 
     for i in 1:2N_x + 1, j in 1:2N_y + 1
-        k_mat[i, j] = sqrt(k_x[i]^2 + k_y[j]^2)
+        k_mat[i, j] = k_x[i]^2 + k_y[j]^2
         kx_mat[i, j] = k_x[i]
         ky_mat[i, j] = k_y[j]
     end
@@ -38,7 +38,7 @@ function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USerie
     us_mat = zeros(T, 2N_x + 1, 2N_y + 1, M_range)
     for l in 1:M_range
         sl, wl = uspara.sw[l + M_mid]
-        us_mat[:, :, l] = exp.( - sl^2 .* k_mat.^2 ./ 4)
+        us_mat[:, :, l] = exp.( - sl^2 .* k_mat ./ 4)
     end
 
     ivsm = inverse_mat(N_grid, L[3], k_x, k_y)
@@ -84,11 +84,11 @@ end
     return nothing
 end
 
-@inbounds function revise_phase_neg_all!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, phase_xs::Array{Complex{T}, 2}, phase_ys::Array{Complex{T}, 2}, phase_xys::Array{Complex{T}, 3}, k_x::Vector{T}, k_y::Vector{T}) where{T}
+@inbounds function revise_phase_neg_all!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, phase_xs::Array{Complex{T}, 2}, phase_ys::Array{Complex{T}, 2}, phase_xys::Array{Complex{T}, 3}, k_x::Vector{T}, k_y::Vector{T}) where{T}
 
     for n in 1:size(poses, 1)
         x, y, z = poses[n]
-        revise_phase_neg!((@view phase_xs[:, n]), (@view phase_ys[:, n]), k_x, k_y, x, y)
+        revise_phase_neg!((@view phase_xs[:, n]), (@view phase_ys[:, n]), k_x, k_y, x - L[1]/2, y - L[2]/2)
     end
 
     for n in 1:size(phase_xys, 3), j in 1:size(phase_xys, 2), i in 1:size(phase_xys, 1)

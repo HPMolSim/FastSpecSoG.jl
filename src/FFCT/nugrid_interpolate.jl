@@ -1,8 +1,3 @@
-@inline function Fourier_k(i::Int, N::Int, L::T) where{T}
-    return T(2π * (i - 1 - N) / L)
-end
-
-
 @inbounds function revise_z_coef!(z_coef::Array{T, 3}, exp_coef::Array{T, 3}, r_z::Vector{T}, poses::Vector{NTuple{3, T}}, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     for n in 1:size(poses, 1)
@@ -12,9 +7,9 @@ end
             for l in M_mid + 1:length(uspara.sw)
                 sl, wl = uspara.sw[l]
                 temp_z = (z - r_zk)^2 / sl^2
-                temp_exp = exp(-temp_z)
-                exp_coef[l - M_mid, k, n] = temp_exp
-                z_coef[l - M_mid, k, n] = (T(2) - T(4) * temp_z) * temp_exp * sl^2
+                temp_exp = wl * exp(-temp_z)
+                exp_coef[l - M_mid, k, n] = temp_exp * sl^2
+                z_coef[l - M_mid, k, n] = (T(2) - T(4) * temp_z) * temp_exp
             end
         end
     end
@@ -30,14 +25,14 @@ H2[i, j, k] := phase_xys[i, j, n] * exp_coef[l, k, n] * k_mat[i, j] * us_mat[i, 
 
 @inbounds function interpolate_nu_einsum!(
     H_r::Array{Complex{T}, 3},
-    qs::Vector{T}, poses::Vector{NTuple{3, T}}, 
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T},
     k_x::Vector{T}, k_y::Vector{T}, k_mat::Array{T, 2}, 
     phase_xs::Array{Complex{T}, 2}, phase_ys::Array{Complex{T}, 2}, phase_xys::Array{Complex{T}, 3}, 
     z_coef::Array{T, 3}, exp_coef::Array{T, 3}, temp_ijlk::Array{Complex{T}, 4}, temp_ijl::Array{Complex{T}, 3},
     r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int,  
     size_dict::Dict{Char, Int64}) where{T}
 
-    revise_phase_neg_all!(qs, poses, phase_xs, phase_ys, phase_xys, k_x, k_y)
+    revise_phase_neg_all!(qs, poses, L, phase_xs, phase_ys, phase_xys, k_x, k_y)
     revise_z_coef!(z_coef, exp_coef, r_z, poses, uspara, M_mid)
 
     # H1
@@ -56,24 +51,19 @@ end
 
 @inbounds function interpolate_nu_einsum_non_inplace!(
     H_r::Array{Complex{T}, 3},
-    qs::Vector{T}, poses::Vector{NTuple{3, T}}, 
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T},
     k_x::Vector{T}, k_y::Vector{T}, k_mat::Array{T, 2}, 
     phase_xs::Array{Complex{T}, 2}, phase_ys::Array{Complex{T}, 2}, phase_xys::Array{Complex{T}, 3}, 
     z_coef::Array{T, 3}, exp_coef::Array{T, 3}, 
-    r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int,  
-    size_dict::Dict{Char, Int64}) where{T}
+    r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
-    revise_phase_neg_all!(qs, poses, phase_xs, phase_ys, phase_xys, k_x, k_y)
+    revise_phase_neg_all!(qs, poses, L, phase_xs, phase_ys, phase_xys, k_x, k_y)
     revise_z_coef!(z_coef, exp_coef, r_z, poses, uspara, M_mid)
 
-    temp_ijlk = ein"ijn, lkn -> ijlk"(phase_xys, z_coef)
-    H_1 = ein"ijlk, ijl -> ijk"(temp_ijlk, us_mat)
+    @ein H1[i, j, k] := phase_xys[i, j, n] * z_coef[l, k, n] * us_mat[i, j, l]
+    @ein H2[i, j, k] := phase_xys[i, j, n] * exp_coef[l, k, n] * k_mat[i, j] * us_mat[i, j, l]
 
-    temp_ijlk = ein"ijn, lkn -> ijlk"(phase_xys, exp_coef)
-    temp_ijl = ein"ij, ijl -> ijl"(k_mat, us_mat)
-    H_2 = ein"ijlk, ijl -> ijk"(temp_ijlk, temp_ijl)
-
-    H_r = π .* (H_1 + H_2)
+    H_r = π .* (H1 .+ H2)
 
     return H_r
 end
@@ -86,7 +76,7 @@ end
     r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     x, y, z = pos
-    # revise_phase_neg!(phase_x, phase_y, k_x, k_y, x, y)
+    revise_phase_neg!(phase_x, phase_y, k_x, k_y, x - L[1] / 2, y - L[2] / 2)
 
     for k in 1:size(H_r, 3)
         r_zk = r_z[k]
@@ -97,8 +87,9 @@ end
                 k_yj = k_y[j]
                 for i in 1:size(H_r, 1)
                     k_xi = k_x[i]
-                    phase = exp(-T(1)im * (k_xi * (x - L[1] / 2) + k_yj * (y - L[2] / 2)))
-                    H_r[i, j, k] += q * π * wl * phase * (T(2) - T(4) * (z - r_zk)^2 / sl^2 + (k_xi^2 + k_yj^2) * sl^2) * exp(- (z - r_zk)^2 / sl^2) * exp(- sl^2 * (k_xi^2 + k_yj^2) / 4)
+                    phase = phase_x[i] * phase_y[j]
+                    us = us_mat[i, j, l - M_mid]
+                    H_r[i, j, k] += q * π * wl * phase * (T(2) - T(4) * (z - r_zk)^2 / sl^2 + (k_xi^2 + k_yj^2) * sl^2) * exp(- (z - r_zk)^2 / sl^2) * us
                 end
             end
         end
