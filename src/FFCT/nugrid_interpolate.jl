@@ -54,6 +54,30 @@ H2[i, j, k] := phase_xys[i, j, n] * exp_coef[l, k, n] * k_mat[i, j] * us_mat[i, 
     return H_r
 end
 
+@inbounds function interpolate_nu_einsum_non_inplace!(
+    H_r::Array{Complex{T}, 3},
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, 
+    k_x::Vector{T}, k_y::Vector{T}, k_mat::Array{T, 2}, 
+    phase_xs::Array{Complex{T}, 2}, phase_ys::Array{Complex{T}, 2}, phase_xys::Array{Complex{T}, 3}, 
+    z_coef::Array{T, 3}, exp_coef::Array{T, 3}, 
+    r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int,  
+    size_dict::Dict{Char, Int64}) where{T}
+
+    revise_phase_neg_all!(qs, poses, phase_xs, phase_ys, phase_xys, k_x, k_y)
+    revise_z_coef!(z_coef, exp_coef, r_z, poses, uspara, M_mid)
+
+    temp_ijlk = ein"ijn, lkn -> ijlk"(phase_xys, z_coef)
+    H_1 = ein"ijlk, ijl -> ijk"(temp_ijlk, us_mat)
+
+    temp_ijlk = ein"ijn, lkn -> ijlk"(phase_xys, exp_coef)
+    temp_ijl = ein"ij, ijl -> ijl"(k_mat, us_mat)
+    H_2 = ein"ijlk, ijl -> ijk"(temp_ijlk, temp_ijl)
+
+    H_r = π .* (H_1 + H_2)
+
+    return H_r
+end
+
 @inbounds function interpolate_nu_loop_single!(
     H_r::Array{Complex{T}, 3},
     q::T, pos::NTuple{3, T}, 
