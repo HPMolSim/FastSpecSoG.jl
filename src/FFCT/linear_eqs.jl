@@ -1,5 +1,5 @@
 @inbounds function boundaries_single!(
-    q::T, pos::NTuple{3, T}, 
+    q::T, pos::NTuple{3, T}, L::NTuple{3, T},
     b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, 
     k_x::Vector{T}, k_y::Vector{T}, us_mat::Array{Complex{T}, 3},
     phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
@@ -7,14 +7,14 @@
 
     x, y, z = pos
 
-    revise_phase_neg!(phase_x, phase_y, k_x, k_y, x, y)
+    revise_phase_neg!(phase_x, phase_y, k_x, k_y, x - L[1] / 2, y - L[2] / 2)
 
     for l in M_mid + 1:length(uspara.sw)
         sl, wl = uspara.sw[l]
         temp = q * π * wl * sl^2
         temp_l = temp * exp(- z^2  / sl^2)
         temp_u = temp * exp(- (L_z - z)^2  / sl^2)
-        for j in size(b_l, 2)
+        for j in 1:size(b_l, 2)
             for i in 1:size(b_l, 1)
                 phase = phase_x[i] * phase_y[j]
                 exp_temp = us_mat[i, j, l - M_mid]
@@ -28,7 +28,7 @@
 end
 
 function boundaries!(
-    qs::Vector{T}, poses::Vector{NTuple{3, T}}, 
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T},
     b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, 
     k_x::Vector{T}, k_y::Vector{T}, us_mat::Array{Complex{T}, 3},
     phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
@@ -38,7 +38,7 @@ function boundaries!(
     set_zeros!(b_u)
 
     for i in 1:length(qs)
-        boundaries_single!(qs[i], poses[i], b_l, b_u, k_x, k_y, us_mat, phase_x, phase_y, L_z, uspara, M_mid)
+        boundaries_single!(qs[i], poses[i], L, b_l, b_u, k_x, k_y, us_mat, phase_x, phase_y, L_z, uspara, M_mid)
     end
 
     return b_l, b_u

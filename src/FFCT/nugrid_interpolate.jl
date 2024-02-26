@@ -86,22 +86,19 @@ end
     r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int) where{T}
 
     x, y, z = pos
-    revise_phase_neg!(phase_x, phase_y, k_x, k_y, x, y)
+    # revise_phase_neg!(phase_x, phase_y, k_x, k_y, x, y)
 
     for k in 1:size(H_r, 3)
         r_zk = r_z[k]
         for l in M_mid + 1:length(uspara.sw)
             sl, wl = uspara.sw[l]
-            exp_temp = exp(- (z - r_zk)^2 / sl^2)
-            z_temp = T(2) - T(4) * (z - r_zk)^2 / sl^2
 
             for j in 1:size(H_r, 2)
-                k_yj = Fourier_k(j, N[2], L[2])
+                k_yj = k_y[j]
                 for i in 1:size(H_r, 1)
-                    k_xi = Fourier_k(i, N[1], L[1])
-                    phase = phase_x[i] * phase_y[j]
-                    us = us_mat[i, j, l - M_mid]
-                    H_r[i, j, k] += q * π * phase * (z_temp + (k_xi^2 + k_yj^2) * sl^2) * exp_temp * us
+                    k_xi = k_x[i]
+                    phase = exp(-T(1)im * (k_xi * (x - L[1] / 2) + k_yj * (y - L[2] / 2)))
+                    H_r[i, j, k] += q * π * wl * phase * (T(2) - T(4) * (z - r_zk)^2 / sl^2 + (k_xi^2 + k_yj^2) * sl^2) * exp(- (z - r_zk)^2 / sl^2) * exp(- sl^2 * (k_xi^2 + k_yj^2) / 4)
                 end
             end
         end

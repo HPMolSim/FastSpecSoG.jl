@@ -3,11 +3,11 @@
     L_x, L_y, L_z = L
     ϕ = zero(Complex{T})
     
-    revise_phase_pos!(phase_x, phase_y, k_x, k_y, x, y)
+    revise_phase_pos!(phase_x, phase_y, k_x, k_y, x - T(L[1] / 2), y - T(L[2] / 2))
 
     for k in 1:size(H_s, 3)
         cheb_val = k == 1 ? T(0.5) : chebpoly(k - 1, z - L_z / T(2), L_z / T(2))
-        ϕ += dot(phase_x, (@view H_s[:, :, k]), phase_y)* cheb_val
+        ϕ += dot(phase_x', (@view H_s[:, :, k]), phase_y)* cheb_val
     end
 
     return q * ϕ / (2 * L_x * L_y)

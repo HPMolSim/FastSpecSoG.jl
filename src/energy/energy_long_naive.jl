@@ -48,7 +48,7 @@ function long_energy_sw_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::In
                 for m_y in -cutoff:cutoff
                     ky = 2π * m_y / L[2]
                     k = sqrt(kx^2 + ky^2)
-                    if k != 0
+                    if !((m_x == 0) && (m_y == 0))
                         ϕ_ij += w * s^2 * exp( - (zi - zj)^2 / s^2) * exp(-s^2 * k^2 / 4) * cos(kx * (xi - xj) + ky * (yi - yj))
                     end
                 end
@@ -83,19 +83,32 @@ function long_energy_sw_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{
     return E * π / (2 * L[1] * L[2])
 end
 
-function long_energy_us(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::Int, L::NTuple{3, T}, uspara::USeriesPara{T}, M_min::Int, M_max::Int) where{T}
+function long_energy_us_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::Int, L::NTuple{3, T}, uspara::USeriesPara{T}, M_min::Int, M_max::Int) where{T}
     @assert M_min ≥ 1
     @assert M_max ≤ length(uspara.sw)
 
     Ek = zero(T)
-    E0 = zero(T)
 
     for l in M_min:M_max
         s, w = uspara.sw[l]
         Ek += long_energy_sw_k(qs, poses, cutoff, L, s, w)
+    end
+    @debug "long range energy, direct su, k" Ek
+
+    return Ek
+end
+
+function long_energy_us_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, uspara::USeriesPara{T}, M_min::Int, M_max::Int) where{T}
+    @assert M_min ≥ 1
+    @assert M_max ≤ length(uspara.sw)
+
+    E0 = zero(T)
+
+    for l in M_min:M_max
+        s, w = uspara.sw[l]
         E0 += long_energy_sw_0(qs, poses, L, s, w)
     end
-    @debug "long range energy, direct sum" Ek, E0
+    @debug "long range energy, direct sum, zeroth mode" E0
 
-    return Ek + E0
+    return E0
 end

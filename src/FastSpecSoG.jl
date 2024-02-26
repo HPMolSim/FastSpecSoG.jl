@@ -7,7 +7,7 @@ export FSSoG_naive
 export short_energy_naive, long_energy_naive, energy_naive
 export mid_paras_gen, energy_mid
 export FFCT_precompute, boundaries!, inverse_mat, interpolate_nu_loop_single!, interpolate_nu_loop!, interpolate_nu_einsum!, real2Cheb!, solve_eqs!, gather_nu, gather_nu_single, zeroth_order
-export energy_long_loop, energy_long_einsum, long_energy_us, long_energy_sw_0, long_energy_sw_k
+export energy_long_loop_k, energy_long_einsum_k, long_energy_us_k, long_energy_us_0, long_energy_sw_0, long_energy_sw_k, energy_long_0
 export SoePara4, SoePara8, SoePara16
 
 include("types.jl")
