@@ -25,6 +25,5 @@
     # using the direct summation
     E_direct = long_energy_us_k(qs, poses, 30, L, uspara, 1, M_mid) + long_energy_us_0(qs, poses, L, uspara, 1, M_mid)
 
-    @show E_3DFFT, E_direct
     @test isapprox(E_3DFFT, E_direct, atol=1e-4)
 end

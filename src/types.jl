@@ -2,6 +2,10 @@ struct USeriesPara{T}
     sw::Vector{NTuple{2, T}}
 end
 
+struct TaylorSeriesPara{N, T}
+    coefs::NTuple{N, T}
+end
+
 struct FSSoG_naive{T} <: ExTinyMD.AbstractInteraction
     b::T
     σ::T

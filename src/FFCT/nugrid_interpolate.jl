@@ -68,6 +68,46 @@ end
     return H_r
 end
 
+@inbounds function interpolate_nu_taylor_single!(
+    H_r::Array{Complex{T}, 3},
+    q::T, pos::NTuple{3, T}, L::NTuple{3, T},
+    k_x::Vector{T}, k_y::Vector{T}, 
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
+    r_z::Vector{T}, taylor_mat::Array{TaylorSeriesPara{N, T}, 2}) where{N, T}
+
+    x, y, z = pos
+    revise_phase_neg!(phase_x, phase_y, k_x, k_y, x - L[1] / 2, y - L[2] / 2)
+
+    for k in 1:size(H_r, 3)
+        r_zk = r_z[k]
+        for j in 1:size(H_r, 2)
+            phase_yj = phase_y[j]
+            for i in 1:size(H_r, 1)
+                phase_xi = phase_x[i]
+                phase = phase_xi * phase_yj
+                H_r[i, j, k] += q * π * phase * horner(((z - r_zk) / L[3])^2, taylor_mat[i, j])
+            end
+        end
+    end
+
+    return H_r
+end
+
+@inbounds function interpolate_nu_taylor!(
+    H_r::Array{Complex{T}, 3},
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T},
+    k_x::Vector{T}, k_y::Vector{T}, 
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
+    r_z::Vector{T}, taylor_mat::Array{TaylorSeriesPara{N, T}, 2}) where{N, T}
+
+    set_zeros!(H_r)
+    for i in 1:length(qs)
+        interpolate_nu_taylor_single!(H_r, qs[i], poses[i], L, k_x, k_y, phase_x, phase_y, r_z, taylor_mat)
+    end
+
+    return H_r
+end
+
 @inbounds function interpolate_nu_loop_single!(
     H_r::Array{Complex{T}, 3},
     q::T, pos::NTuple{3, T}, 
