@@ -20,6 +20,8 @@
     
     E_FFCT_einsum_k = energy_long_einsum_k(qs, poses, L, M_mid, k_x, k_y, k_mat, r_z, phase_x, phase_y, phase_xs, phase_ys, phase_xys, temp_ijlk, temp_ijl, size_dict, z_coef, exp_coef, us_mat, b_l, b_u, rhs, sol, ivsm, H_r, H_c, H_s, uspara)
 
+    E_FFCT_cheb_k = energy_long_cheb_k(qs, poses, L, M_mid, k_x, k_y, r_z, phase_x, phase_y, us_mat, b_l, b_u, rhs, sol, ivsm, H_r, H_c, H_s, uspara, ChebUSeries(k_x, k_y, L[3], uspara, M_mid, 64))
+
     E_FFCT_0 = energy_long_0(qs, poses, L, M_mid, z, sort_z, uspara, soepara)
 
     @info "running the direct summation for the long range part of the energy"
@@ -27,9 +29,9 @@
     E_direct_k = long_energy_us_k(qs, poses, 30, L, uspara, M_mid + 1, length(uspara.sw))
     E_direct_0 = long_energy_us_0(qs, poses, L, uspara, M_mid + 1, length(uspara.sw))
 
-    @show E_FFCT_loop_k, E_FFCT_einsum_k, E_direct_k
     @test E_FFCT_0 ≈ E_direct_0
     @test E_FFCT_einsum_k ≈ E_FFCT_loop_k
     @test isapprox(E_FFCT_loop_k, E_direct_k, atol=1e-8)
     @test isapprox(E_FFCT_einsum_k, E_direct_k, atol=1e-8)
+    @test isapprox(E_FFCT_cheb_k, E_direct_k, atol=1e-8)
 end

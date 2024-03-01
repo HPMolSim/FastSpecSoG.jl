@@ -58,6 +58,30 @@ function energy_long_einsum_k(
     return E_k
 end
 
+function energy_long_cheb_k(
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, 
+    M_mid::Int, 
+    k_x::Vector{T}, k_y::Vector{T}, r_z::Vector{T}, 
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}},
+    us_mat::Array{Complex{T}, 3}, b_l::Array{Complex{T}, 2}, b_u::Array{Complex{T}, 2}, 
+    rhs::Vector{Complex{T}}, sol::Vector{Complex{T}}, ivsm::Array{T, 4},
+    H_r::Array{Complex{T}, 3}, H_c::Array{Complex{T}, 3}, H_s::Array{Complex{T}, 3}, 
+    uspara::USeriesPara{T}, cheb_mat::Array{ChebPoly{1, T, T}, 2}
+    ) where{T}
+
+    @assert M_mid ≤ length(uspara.sw)
+
+    b_l, b_u = boundaries!(qs, poses, L, b_l, b_u, k_x, k_y, us_mat, phase_x, phase_y, L[3], uspara, M_mid)
+    H_r = interpolate_nu_cheb!(H_r,qs, poses, L, k_x, k_y, phase_x, phase_y, r_z, cheb_mat)
+    H_c = real2Cheb!(H_r, H_c, r_z, L[3])
+    H_s = solve_eqs!(rhs, sol, H_c, H_s, b_l, b_u, ivsm, L[3])
+    E_k = gather_nu(qs, poses, L, k_x, k_y, phase_x, phase_y, H_s)
+
+    @debug "long range energy, cheb, FFCT" E_k
+
+    return E_k
+end
+
 function energy_long_0(
     qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, M_mid::Int, 
     z::Vector{T}, sort_z::Vector{Int}, 

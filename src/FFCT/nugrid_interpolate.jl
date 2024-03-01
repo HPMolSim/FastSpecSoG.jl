@@ -29,8 +29,7 @@ H2[i, j, k] := phase_xys[i, j, n] * exp_coef[l, k, n] * k_mat[i, j] * us_mat[i, 
     k_x::Vector{T}, k_y::Vector{T}, k_mat::Array{T, 2}, 
     phase_xs::Array{Complex{T}, 2}, phase_ys::Array{Complex{T}, 2}, phase_xys::Array{Complex{T}, 3}, 
     z_coef::Array{T, 3}, exp_coef::Array{T, 3}, temp_ijlk::Array{Complex{T}, 4}, temp_ijl::Array{Complex{T}, 3},
-    r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int,  
-    size_dict::Dict{Char, Int64}) where{T}
+    r_z::Vector{T}, us_mat::Array{Complex{T}, 3}, uspara::USeriesPara{T}, M_mid::Int, size_dict::Dict{Char, Int64}) where{T}
 
     revise_phase_neg_all!(qs, poses, L, phase_xs, phase_ys, phase_xys, k_x, k_y)
     revise_z_coef!(z_coef, exp_coef, r_z, poses, uspara, M_mid)
@@ -64,6 +63,48 @@ end
     @ein H2[i, j, k] := phase_xys[i, j, n] * exp_coef[l, k, n] * k_mat[i, j] * us_mat[i, j, l]
 
     H_r = π .* (H1 .+ H2)
+
+    return H_r
+end
+
+@inbounds function interpolate_nu_cheb_single!(
+    H_r::Array{Complex{T}, 3},
+    q::T, pos::NTuple{3, T}, L::NTuple{3, T},
+    k_x::Vector{T}, k_y::Vector{T}, 
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
+    r_z::Vector{T}, cheb_mat::Array{ChebPoly{1, T, T}, 2}) where{T}
+
+    x, y, z = pos
+    revise_phase_neg!(phase_x, phase_y, k_x, k_y, x - L[1] / 2, y - L[2] / 2)
+
+    
+    for j in 1:size(H_r, 2)
+        phase_yj = phase_y[j]
+        for i in 1:size(H_r, 1)
+            phase_xi = phase_x[i]
+            phase = phase_xi * phase_yj
+            f_cheb = cheb_mat[i, j]
+            for k in 1:size(H_r, 3)
+                r_zk = r_z[k]
+                H_r[i, j, k] += q * phase * f_cheb(abs(z - r_zk))
+            end
+        end
+    end
+
+    return H_r
+end
+
+@inbounds function interpolate_nu_cheb!(
+    H_r::Array{Complex{T}, 3},
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T},
+    k_x::Vector{T}, k_y::Vector{T}, 
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}}, 
+    r_z::Vector{T}, cheb_mat::Array{ChebPoly{1, T, T}, 2}) where{T}
+
+    set_zeros!(H_r)
+    for i in 1:length(qs)
+        interpolate_nu_cheb_single!(H_r, qs[i], poses[i], L, k_x, k_y, phase_x, phase_y, r_z, cheb_mat)
+    end
 
     return H_r
 end
