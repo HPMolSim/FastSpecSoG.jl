@@ -95,3 +95,11 @@ function energy_long_0(
 
     return E_0
 end
+
+function energy_long(interaction::FSSoGInteraction{T}) where{T}
+
+    E_k = energy_long_cheb_k(interaction.charge, interaction.position, interaction.L, interaction.M_mid, interaction.k_x, interaction.k_y, interaction.r_z, interaction.phase_x, interaction.phase_y, interaction.us_mat, interaction.b_l, interaction.b_u, interaction.rhs, interaction.sol, interaction.ivsm, interaction.H_r, interaction.H_c, interaction.H_s, interaction.uspara, interaction.cheb_mat)
+    E_0 = energy_long_0(interaction.charge, interaction.position, interaction.L, interaction.M_mid, interaction.z, interaction.sort_z, interaction.uspara, interaction.soepara)
+
+    return (E_k + E_0) / (4π * interaction.ϵ)
+end

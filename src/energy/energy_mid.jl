@@ -39,3 +39,7 @@ function energy_mid(qs::Vector{T}, poses::Vector{NTuple{3, T}}, gridinfo::GridIn
 
     return E
 end
+
+function energy_mid(interaction::FSSoGInteraction{T}) where{T}
+    return energy_mid(interaction.charge, interaction.position, interaction.gridinfo, interaction.gridbox, interaction.cheb_coefs, interaction.scalefactor) / (4π * interaction.ϵ)
+end

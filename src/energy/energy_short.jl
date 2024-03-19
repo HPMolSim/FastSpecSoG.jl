@@ -55,3 +55,7 @@ function short_energy_Cheb(uspara_cheb::ChebPoly{1, T, T}, r_c::T, F0::T, bounda
 
     return energy_short / 4π
 end
+
+function energy_short(interaction::FSSoGInteraction{T}, neighbor::CellList3D{T}) where{T}
+    return short_energy_Cheb(interaction.uspara_cheb, interaction.r_c, interaction.F0, interaction.boundary, neighbor, interaction.position, interaction.charge) / interaction.ϵ
+end
