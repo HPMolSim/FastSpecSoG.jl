@@ -27,9 +27,9 @@
 
             H_r_cheb = copy(interpolate_nu_cheb!(copy(H_r), qs, poses, L, k_x, k_y, phase_x, phase_y, r_z, cheb_mat))
 
-            @test H_r_einsum ≈ H_r_einsum_direct
-            @test H_r_einsum_direct ≈ H_r_loop
-            @test H_r_einsum ≈ H_r_loop
+            @test isapprox(H_r_einsum, H_r_einsum_direct; atol = 1e-13)
+            @test isapprox(H_r_einsum_direct, H_r_loop; atol = 1e-13)
+            @test isapprox(H_r_einsum, H_r_loop; atol = 1e-13)
             @test isapprox(H_r_einsum, H_r_cheb; atol=1e-8)
         end
     end

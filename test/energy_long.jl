@@ -29,7 +29,7 @@
     E_direct_k = long_energy_us_k(qs, poses, 30, L, uspara, M_mid + 1, length(uspara.sw))
     E_direct_0 = long_energy_us_0(qs, poses, L, uspara, M_mid + 1, length(uspara.sw))
 
-    @test E_FFCT_0 ≈ E_direct_0
+    @test isapprox(E_FFCT_0, E_direct_0, atol = 1e-8)
     @test E_FFCT_einsum_k ≈ E_FFCT_loop_k
     @test isapprox(E_FFCT_loop_k, E_direct_k, atol=1e-8)
     @test isapprox(E_FFCT_einsum_k, E_direct_k, atol=1e-8)

@@ -7,8 +7,10 @@ import FastChebInterp: ChebPoly
 export USeriesPara, U_series, BSA, ChebUSeries
 export FSSoG_naive
 export short_energy_naive, long_energy_naive, energy_naive
-export mid_paras_gen, energy_mid
 
+export Es_Cheb_precompute, short_energy_Cheb
+
+export mid_paras_gen, energy_mid
 export FFCT_precompute, boundaries!, inverse_mat
 export interpolate_nu_einsum!, interpolate_nu_cheb!, interpolate_nu_loop!
 export real2Cheb!, solve_eqs!, gather_nu
@@ -26,6 +28,7 @@ include("FSSoGInteraction.jl")
 
 include("energy/energy.jl")
 include("energy/energy_short_naive.jl")
+include("energy/energy_short.jl")
 include("energy/energy_long_naive.jl")
 include("energy/energy_mid.jl")
 include("energy/energy_long.jl")

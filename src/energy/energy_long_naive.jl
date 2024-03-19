@@ -1,4 +1,4 @@
-function long_energy_naive(interaction::FSSoG_naive{T}, position::Vector{Point{3, T}}, charge::Vector{T}) where{T}
+function long_energy_naive(interaction::FSSoG_naive{T}, position::Vector{NTuple{3, T}}, charge::Vector{T}) where{T}
     energy = zero(T)
     for K in interaction.k_set
         energy += long_energy_naive_k(K, interaction, position, charge)
@@ -6,7 +6,7 @@ function long_energy_naive(interaction::FSSoG_naive{T}, position::Vector{Point{3
     return energy / (4π * interaction.ϵ)
 end
 
-function long_energy_naive_k(K::NTuple{3, T}, interaction::FSSoG_naive{T}, position::Vector{Point{3, T}}, charge::Vector{T}) where{T}
+function long_energy_naive_k(K::NTuple{3, T}, interaction::FSSoG_naive{T}, position::Vector{NTuple{3, T}}, charge::Vector{T}) where{T}
 
     energy_k = zero(T)
 
