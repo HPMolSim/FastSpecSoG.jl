@@ -21,7 +21,7 @@ function k_set_2D(k_c::T, L::NTuple{3,T}) where{T}
 end
 
 
-function FSSoG_naive(L::NTuple{3, T}, n_atoms::Int, r_c::T, k_c::T, b::T, σ::T, ω::T, M::T; ϵ::T = 1.0) where{T}
+function FSSoG_naive(L::NTuple{3, T}, n_atoms::Int, r_c::T, k_c::T, b::T, σ::T, ω::T, M::Int; ϵ::T = 1.0) where{T}
     uspara = USeriesPara(b, σ, ω, M)
     k_set = k_set_2D(k_c, L)
     return FSSoG_naive{T}(b, σ, ω, M, r_c, k_c, ϵ, L, k_set, uspara, n_atoms)
