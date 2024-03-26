@@ -4,7 +4,7 @@ using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, SumOfExpVPMR,
 
 import FastChebInterp: ChebPoly
 
-export USeriesPara, U_series, BSA, ChebUSeries
+export USeriesPara, U_series, BSA, ChebUSeries, proper_M
 export FSSoG_naive, FSSoGInteraction
 export short_energy_naive, long_energy_naive, energy_naive
 

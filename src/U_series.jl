@@ -58,3 +58,14 @@ function U_series(x::T, uspara::USeriesPara{T}) where{T}
 
     return U_series_value
 end
+
+function proper_M(η::T, L_z::T, uspara::USeriesPara{T}) where{T}
+    for i in 1:length(uspara.sw) - 1
+        (s, w) = uspara.sw[i]
+        (sp, wp) = uspara.sw[i + 1]
+        if  s < η * L_z < sp
+            return i
+        end
+    end
+    @error "No proper M found for η = $η"
+end
