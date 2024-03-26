@@ -1,6 +1,6 @@
 module FastSpecSoG
 
-using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, SumOfExpVPMR, LoopVectorization, OMEinsum, FastChebInterp
+using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, SumOfExpVPMR, LoopVectorization, OMEinsum, FastChebInterp, Polynomials
 
 import FastChebInterp: ChebPoly
 
@@ -31,6 +31,7 @@ include("FFCT/linear_eqs.jl")
 include("FFCT/nugrid_gather.jl")
 include("FFCT/zeroth_order.jl")
 include("FFCT/cheb_interpolate.jl")
+include("FFCT/Taylor.jl")
 
 include("energy/energy_short.jl")
 include("energy/energy_mid.jl")
