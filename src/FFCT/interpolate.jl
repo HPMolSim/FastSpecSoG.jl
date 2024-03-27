@@ -168,3 +168,23 @@ end
 
     return H_c
 end
+
+function interpolate_thin!(
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, qs_new::Vector{T}, poses_new::Vector{NTuple{2, T}}, L::NTuple{3, T},
+    gridinfo::GridInfo{2, T}, gridboxs::Array{GridBox{2, T}, 2}, cheb_coefs::NTuple{2, ChebCoef{T}},
+    r_z::Vector{T}
+    ) where{T}
+    
+    R_z, Taylor_Q = size(gridboxs)
+    update_poses_new!(poses_new, poses)
+
+    for i in 1:R_z
+        r_zi = r_z[i]
+        for j in 1:Taylor_Q
+            update_qs_new!(qs_new, qs, poses, r_zi, j, L[3])
+            interpolate!(qs_new, poses_new, gridinfo, gridboxs[i, j], cheb_coefs)
+        end
+    end
+
+    return gridboxs
+end

@@ -20,18 +20,21 @@ export energy_long_loop_k, energy_long_einsum_k, energy_long_cheb_k, energy_long
 export long_energy_us_k, long_energy_us_0, long_energy_sw_0, long_energy_sw_k
 export SoePara, SoePara4, SoePara8, SoePara16
 
+export TaylorUSeries_k, TaylorUSeries
+
 include("types.jl")
 
 include("U_series.jl")
 include("FSSoGInteraction.jl")
 
 include("FFCT/precompute.jl")
-include("FFCT/nugrid_interpolate.jl")
+include("FFCT/interpolate.jl")
 include("FFCT/linear_eqs.jl")
-include("FFCT/nugrid_gather.jl")
+include("FFCT/gather.jl")
 include("FFCT/zeroth_order.jl")
 include("FFCT/cheb_interpolate.jl")
 include("FFCT/Taylor.jl")
+include("FFCT/scaling.jl")
 
 include("energy/energy_short.jl")
 include("energy/energy_mid.jl")

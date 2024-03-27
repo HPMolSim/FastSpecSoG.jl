@@ -12,4 +12,5 @@ Random.seed!(1234)
     include("interpolate_nu.jl")
     include("energy_long.jl")
     include("cheb_interpolate.jl")
+    include("Taylor.jl")
 end

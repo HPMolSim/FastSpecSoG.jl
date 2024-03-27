@@ -157,3 +157,41 @@ function inverse_mat(N_grid::NTuple{3, Int}, L_z::T, k_x::Vector{T}, k_y::Vector
 
     return inverse_mat
 end
+
+function update_poses_new!(poses_new::Vector{NTuple{2, T}}, poses::Vector{NTuple{3, T}})
+    for i in 1:length(poses)
+        poses_new[i] = (poses[i][1], poses[i][2])
+    end
+    return poses_new
+end
+
+function update_qs_new!(qs_new::Vector{T}, qs::Vector{T}, poses::Vector{NTuple{3, T}}, r_z::T, j::Int, Lz::T)
+    for i in 1:length(qs)
+        qs_new[i] = qs[i] * ((poses[i][3] - r_z) / Lz)^(2j)
+    end
+    return qs_new
+end
+
+function thin_paras_gen(N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, L::NTuple{3, T}, cheb_order::Int, uspara::USeriesPara{T}, Taylor_Q::Int) where{T}
+    periodicity = (true, true)
+    extra_pad = (0, 0)
+
+    gridinfo = GridInfo(N_real, w, periodicity, extra_pad, (L[1], L[2]))
+    gridboxs = Array{GridBox{2, T}, 2}(undef, R_z, Taylor_Q)
+    fill!(gridboxs, GridBox(gridinfo))
+
+    f_window = [x -> Wkb(x, (w[i] + 0.5) * gridinfo.h[i], β[i]) for i in 1:2]
+    cheb_coefs = tuple([ChebCoef(f_window[i], gridinfo.h[i], w[i], cheb_order) for i in 1:2]...)
+
+    F_f_window = [x -> FWkb(x, (w[i] + 0.5) * gridinfo.h[i], β[i]) for i in 1:2]
+
+    k_x = gridinfo.k[1]
+    k_y = gridinfo.k[2]
+    taylor_mats = TaylorUSeries(k_x, k_y, L[3], uspara, 0, Taylor_Q)
+
+    func_scale = (k_x, k_y) -> (F_f_window[1](k_x) * F_f_window[2](k_y))^(-2)
+    sf0 = ScalingFactor(func_scale, gridinfo)
+    scalefactors = [ScalingFactor(func_scale, sf0.factors .* taylor_mats[i]) for i in 1:Taylor_Q]
+
+    return (gridinfo, gridboxs, cheb_coefs, scalefactors)
+end
