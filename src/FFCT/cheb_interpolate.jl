@@ -76,16 +76,19 @@ end
     set_zeros!(H_c)
     N_z = size(H_r, 3)
 
-    # for k in 1:N_z, l in 1:N_z
-    #     cheb_temp = k == 1 ? 0.5 : chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
-    #     for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
-    #         H_c[i, j, k] += 2 / N_z * H_r[i, j, l] * cheb_temp
+    for k in 1:N_z, l in 1:N_z
+        cheb_temp = k == 1 ? 0.5 : chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
+        for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
+            H_c[i, j, k] += 2 / N_z * H_r[i, j, l] * cheb_temp
+        end
+    end
+
+    # for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
+    #     coefs = chebinterp((@view H_r[i, j, :]), zero(T), L_z).coefs
+    #     for k in 1:length(coefs)
+    #         H_c[i, j, k] += coefs[k]
     #     end
     # end
-
-    for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
-        (@view H_c[i, j, :]) .= chebinterp((@view H_c[i, j, :]), zero(T), L_z).coefs
-    end
 
     return H_c
 end

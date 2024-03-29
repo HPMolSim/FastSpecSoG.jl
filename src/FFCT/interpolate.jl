@@ -179,7 +179,9 @@ function interpolate_Q2D_direct!(
                         k_xi = k_x[i]
                         k2 = k_xi^2 + k_yj^2
                         phase = phase_x[i] * phase_y[j]
-                        H_r[i, j, k] += q * π * wl * sl^2 * phase * exp(-sl^2 * k2 / 4) * exp(-(z - r_zk)^2 / sl^2)
+                        if !(k2 ≈ zero(T))
+                            H_r[i, j, k] += q * π * wl * sl^2 * phase * exp(-sl^2 * k2 / 4) * exp(-(z - r_zk)^2 / sl^2)
+                        end
                     end
                 end
             end
@@ -221,4 +223,23 @@ function interpolate_thin!(
     end
 
     return gridboxs
+end
+
+function ϕkz_direct(z0::T, qs::Vector{T}, poses::Vector{NTuple{3, T}}, k_x::T, k_y::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
+
+    s = zero(T)
+
+    for n in 1:length(qs)
+        x, y, z = poses[n]
+        q = qs[n]
+
+        for l in M_mid + 1:length(uspara.sw)
+            sl, wl = uspara.sw[l]
+            k2 = k_x^2 + k_y^2
+            phase = exp( - T(1)im * (k_x * x + k_y * y))
+            s += q * π * wl * sl^2 * phase * exp(-sl^2 * k2 / 4) * exp(-(z - z0)^2 / sl^2)
+        end
+    end
+
+    return s
 end

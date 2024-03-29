@@ -35,7 +35,7 @@
     @test isapprox(E_FFCT_loop_k, E_direct_k, atol=1e-8)
     @test isapprox(E_FFCT_einsum_k, E_direct_k, atol=1e-8)
     @test isapprox(E_FFCT_cheb_k, E_direct_k, atol=1e-8)
-    @test isapprox(E_FFCT_Q2D_direct_k, E_direct_k + E_direct_0, atol=1e-8)
+    @test isapprox(E_FFCT_Q2D_direct_k, E_direct_k, atol=1e-8)
 end
 
 @testset "energy_long Q2D" begin
@@ -56,7 +56,6 @@ end
 
     E_FFCT_Q2D_direct_k = energy_long_Q2D_direct_k(qs, poses, L, M_mid, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, uspara)
     E_direct_k = long_energy_us_k(qs, poses, 30, L, uspara, M_mid + 1, length(uspara.sw))
-    E_direct_0 = long_energy_us_0(qs, poses, L, uspara, M_mid + 1, length(uspara.sw))
-
-    @test isapprox(E_FFCT_Q2D_direct_k, E_direct_k + E_direct_0, atol=1e-6)
+    
+    @test isapprox(E_FFCT_Q2D_direct_k, E_direct_k, atol=1e-6)
 end
