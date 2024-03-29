@@ -55,3 +55,52 @@ function idct(a::Vector{T}, x::T, scale::T) where{T}
     end
     return y
 end
+
+@inbounds function real2Cheb!(H_r::Array{Complex{T}, 3}, H_c::Array{Complex{T}, 3}, r_z::Vector{T}, L_z::T) where{T}
+
+    set_zeros!(H_c)
+    N_z = size(H_r, 3)
+
+    for k in 1:N_z, l in 1:N_z
+        cheb_temp = chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
+        for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
+            H_c[i, j, k] += 2 / N_z * H_r[i, j, l] * cheb_temp
+        end
+    end
+
+    return H_c
+end
+
+@inbounds function real2Cheb_Q2D!(H_r::Array{Complex{T}, 3}, H_c::Array{Complex{T}, 3}, r_z::Vector{T}, L_z::T) where{T}
+
+    set_zeros!(H_c)
+    N_z = size(H_r, 3)
+
+    # for k in 1:N_z, l in 1:N_z
+    #     cheb_temp = k == 1 ? 0.5 : chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
+    #     for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
+    #         H_c[i, j, k] += 2 / N_z * H_r[i, j, l] * cheb_temp
+    #     end
+    # end
+
+    for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
+        (@view H_c[i, j, :]) .= chebinterp((@view H_c[i, j, :]), zero(T), L_z).coefs
+    end
+
+    return H_c
+end
+
+@inbounds function Cheb2real_Q2D!(H_c::Array{Complex{T}, 3}, H_r::Array{Complex{T}, 3}, r_z::Vector{T}, L_z::T) where{T}
+
+    set_zeros!(H_r)
+    N_z = size(H_c, 3)
+
+    for k in 1:N_z, l in 1:N_z
+        cheb_temp = chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
+        for j in 1:size(H_c, 2), i in 1:size(H_c, 1)
+            H_r[i, j, l] += H_c[i, j, k] * cheb_temp
+        end
+    end
+
+    return H_r
+end
