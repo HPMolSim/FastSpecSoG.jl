@@ -103,3 +103,22 @@ function energy_long(interaction::FSSoGInteraction{T}) where{T}
 
     return (E_k + E_0) / (4π * interaction.ϵ)
 end
+
+function energy_long_Q2D_direct_k(
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, 
+    M_mid::Int, 
+    k_x::Vector{T}, k_y::Vector{T}, r_z::Vector{T}, 
+    phase_x::Vector{Complex{T}}, phase_y::Vector{Complex{T}},
+    H_r::Array{Complex{T}, 3}, H_c::Array{Complex{T}, 3},
+    uspara::USeriesPara{T}) where{T}
+
+    @assert M_mid ≤ length(uspara.sw)
+
+    H_r = interpolate_Q2D_direct!(H_r, qs, poses, L, k_x, k_y, phase_x, phase_y, r_z, uspara, M_mid)
+    H_c = real2Cheb_Q2D!(H_r, H_c, r_z, L[3])
+    E_k = gather_Q2D(qs, poses, L, k_x, k_y, phase_x, phase_y, H_c)
+
+    @debug "long range energy, FFCT, direct interpolate" E_k
+
+    return E_k
+end

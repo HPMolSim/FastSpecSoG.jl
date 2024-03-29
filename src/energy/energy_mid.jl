@@ -10,6 +10,7 @@ function Tdk(kx::T, ky::T, kz::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
     return sqrt(π)/4 * Tdk_value
 end
 
+# using the KB window function as default
 function mid_paras_gen(N_real::NTuple{3, Int}, w::NTuple{3, Int}, β::NTuple{3, T}, L::NTuple{3, T}, extra_pad_ratio::Int, cheb_order::Int, uspara::USeriesPara{T}, M_mid::Int) where{T}
     periodicity = (true, true, false)
     extra_pad = extra_pad_ratio .* w

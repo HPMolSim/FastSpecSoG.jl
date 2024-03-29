@@ -30,3 +30,28 @@ function ChebUSeries(k_x::Vector{T}, k_y::Vector{T}, L_z::T, uspara::USeriesPara
 
     return cheb_mat
 end
+
+@inline function chebpoly(n::Int, x::T, scale::T) where{T}
+    return cos(n * acos(x / scale))
+end
+
+function dct(x::Vector{T}, fx::Vector{T}, scale::T) where{T}
+    N = length(x)
+    a = zeros(T, N)
+    for m in 0:N-1
+        for n in 1:N
+            cheb_temp = m == 0 ? 0.5 : cos(m * acos(x[n] / scale))
+            a[m + 1] += 2 / N * fx[n] * cheb_temp
+        end
+    end
+    return a
+end
+
+function idct(a::Vector{T}, x::T, scale::T) where{T}
+    N = length(a)
+    y = zero(T)
+    for m in 0:N-1
+        y += a[m + 1] * cos(m * acos(x / scale))
+    end
+    return y
+end

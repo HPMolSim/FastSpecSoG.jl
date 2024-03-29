@@ -4,10 +4,6 @@
     return fill!(a, zero(T))
 end
 
-@inline function chebpoly(n::Int, x::T, scale::T) where{T}
-    return cos(n * acos(x / scale))
-end
-
 # precompute the parameters to be used
 function FFCT_precompute(L::NTuple{3, T}, N_grid::NTuple{3, Int}, uspara::USeriesPara{T}, M_mid::Int, n_atoms::Int) where{T}
     L_x, L_y, L_z = L
@@ -158,20 +154,6 @@ function inverse_mat(N_grid::NTuple{3, Int}, L_z::T, k_x::Vector{T}, k_y::Vector
     return inverse_mat
 end
 
-function update_poses_new!(poses_new::Vector{NTuple{2, T}}, poses::Vector{NTuple{3, T}})
-    for i in 1:length(poses)
-        poses_new[i] = (poses[i][1], poses[i][2])
-    end
-    return poses_new
-end
-
-function update_qs_new!(qs_new::Vector{T}, qs::Vector{T}, poses::Vector{NTuple{3, T}}, r_z::T, j::Int, Lz::T)
-    for i in 1:length(qs)
-        qs_new[i] = qs[i] * ((poses[i][3] - r_z) / Lz)^(2j)
-    end
-    return qs_new
-end
-
 function thin_paras_gen(N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, L::NTuple{3, T}, cheb_order::Int, uspara::USeriesPara{T}, Taylor_Q::Int) where{T}
     periodicity = (true, true)
     extra_pad = (0, 0)
@@ -194,4 +176,20 @@ function thin_paras_gen(N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β:
     scalefactors = [ScalingFactor(func_scale, sf0.factors .* taylor_mats[i]) for i in 1:Taylor_Q]
 
     return (gridinfo, gridboxs, cheb_coefs, scalefactors)
+end
+
+function thin_precompute(N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, L::NTuple{3, T}, cheb_order::Int, uspara::USeriesPara{T}, Taylor_Q::Int, n_atoms::Int) where{T}
+    gridinfo, gridboxs, cheb_coefs, scalefactors = thin_paras_gen(N_real, R_z, w, β, L, cheb_order, uspara, Taylor_Q)
+    qs_new = zeros(T, n_atoms)
+    poses_new = Vector{NTuple{2, T}}(undef, n_atoms)
+    fill!(poses_new, (zero(T), zero(T)))
+
+    H_r = zeros(Complex{T}, N_real[1], N_real[2], R_z)
+    H_c = zeros(Complex{T}, N_real[1], N_real[2], R_z)
+    H_s = zeros(Complex{T}, N_real[1], N_real[2], R_z)
+
+    cheb_value = [similar(gridboxs[1,1].cheb_value[1]) for i in 1:2]
+    r_z = Vector{T}([L[3] / 2 * ( 1.0 - cos((2i - 1)*π / 2R_z) ) for i in 1:R_z])
+
+    return gridinfo, gridboxs, cheb_coefs, scalefactors, qs_new, poses_new, H_r, H_c, H_s, cheb_value, r_z
 end
