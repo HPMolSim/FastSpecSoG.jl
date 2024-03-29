@@ -6,7 +6,7 @@ using Random
 
 @testset "FastSpecSoG.jl" begin
     include("U_series.jl")
-    # include("energy.jl")
+    include("energy.jl")
     include("energy_short.jl")
     include("energy_mid.jl")
     include("interpolate.jl")
