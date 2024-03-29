@@ -48,15 +48,8 @@ mutable struct FSSoGInteraction{T} <: ExTinyMD.AbstractInteraction
     r_z::Vector{T}
     phase_x::Vector{Complex{T}}
     phase_y::Vector{Complex{T}}
-    us_mat::Array{Complex{T}, 3}
-    b_l::Array{Complex{T}, 2}
-    b_u::Array{Complex{T}, 2}
-    rhs::Vector{Complex{T}}
-    sol::Vector{Complex{T}}
-    ivsm::Array{T, 4}
     H_r::Array{Complex{T}, 3}
     H_c::Array{Complex{T}, 3}
-    H_s::Array{Complex{T}, 3}
     cheb_mat::Array{ChebPoly{1, T, T}, 2}
 
     # for FFCT zero order term

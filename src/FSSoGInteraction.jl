@@ -58,10 +58,10 @@ function FSSoGInteraction(
     gridinfo, gridbox, cheb_coefs, scalefactor = mid_paras_gen(N_real_mid, w, β, L, extra_pad_ratio, cheb_order, uspara, M_mid)
     
     # some of these term are for other methods, not used
-    k_x, k_y, k_mat, r_z, us_mat, H_r, H_c, H_s, ivsm, b_l, b_u, phase_x, phase_y, phase_xs, phase_ys, phase_xys, rhs, sol, sort_z, z, size_dict, temp_ijlk, temp_ijl, z_coef, exp_coef = FFCT_precompute(L, N_grid_long, uspara, M_mid, n_atoms)
+    k_x, k_y, r_z, H_r, H_c, phase_x, phase_y,  sort_z, z = long_paras_gen(L, N_grid_long, n_atoms)
     cheb_mat = ChebUSeries(k_x, k_y, L[3], uspara, M_mid, Q_long)
 
-    return FSSoGInteraction{T}(b, σ, ω, M, ϵ, L, boundary, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, gridinfo, gridbox, cheb_coefs, scalefactor, M_mid, k_x, k_y, r_z, phase_x, phase_y, us_mat, b_l, b_u, rhs, sol, ivsm, H_r, H_c, H_s, cheb_mat, z, sort_z, soepara)
+    return FSSoGInteraction{T}(b, σ, ω, M, ϵ, L, boundary, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, gridinfo, gridbox, cheb_coefs, scalefactor, M_mid, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, cheb_mat, z, sort_z, soepara)
 end
 
 function FSSoGInteraction(

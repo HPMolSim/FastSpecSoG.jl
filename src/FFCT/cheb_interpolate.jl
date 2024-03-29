@@ -4,7 +4,7 @@ function USeries_direct(z::T, k_xi::T, k_yj::T, uspara::USeriesPara{T}, M_mid::I
 
     for l in M_mid + 1:length(uspara.sw)
         sl, wl = uspara.sw[l]
-        t += π * wl * exp(-sl^2 * k2 / 4) * exp(-z^2 / sl^2) * (T(2) - T(4) * z^2 / sl^2 + k2 * sl^2)
+        t += π * wl * sl^2 * exp(-sl^2 * k2 / 4) * exp(-z^2 / sl^2)
     end
 
     return t
@@ -35,43 +35,7 @@ end
     return cos(n * acos(x / scale))
 end
 
-function dct(x::Vector{T}, fx::Vector{T}, scale::T) where{T}
-    N = length(x)
-    a = zeros(T, N)
-    for m in 0:N-1
-        for n in 1:N
-            cheb_temp = m == 0 ? 0.5 : cos(m * acos(x[n] / scale))
-            a[m + 1] += 2 / N * fx[n] * cheb_temp
-        end
-    end
-    return a
-end
-
-function idct(a::Vector{T}, x::T, scale::T) where{T}
-    N = length(a)
-    y = zero(T)
-    for m in 0:N-1
-        y += a[m + 1] * cos(m * acos(x / scale))
-    end
-    return y
-end
-
 @inbounds function real2Cheb!(H_r::Array{Complex{T}, 3}, H_c::Array{Complex{T}, 3}, r_z::Vector{T}, L_z::T) where{T}
-
-    set_zeros!(H_c)
-    N_z = size(H_r, 3)
-
-    for k in 1:N_z, l in 1:N_z
-        cheb_temp = chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
-        for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
-            H_c[i, j, k] += 2 / N_z * H_r[i, j, l] * cheb_temp
-        end
-    end
-
-    return H_c
-end
-
-@inbounds function real2Cheb_Q2D!(H_r::Array{Complex{T}, 3}, H_c::Array{Complex{T}, 3}, r_z::Vector{T}, L_z::T) where{T}
 
     set_zeros!(H_c)
     N_z = size(H_r, 3)
@@ -83,17 +47,10 @@ end
         end
     end
 
-    # for j in 1:size(H_r, 2), i in 1:size(H_r, 1)
-    #     coefs = chebinterp((@view H_r[i, j, :]), zero(T), L_z).coefs
-    #     for k in 1:length(coefs)
-    #         H_c[i, j, k] += coefs[k]
-    #     end
-    # end
-
     return H_c
 end
 
-@inbounds function Cheb2real_Q2D!(H_c::Array{Complex{T}, 3}, H_r::Array{Complex{T}, 3}, r_z::Vector{T}, L_z::T) where{T}
+@inbounds function Cheb2real!(H_c::Array{Complex{T}, 3}, H_r::Array{Complex{T}, 3}, r_z::Vector{T}, L_z::T) where{T}
 
     set_zeros!(H_r)
     N_z = size(H_c, 3)
