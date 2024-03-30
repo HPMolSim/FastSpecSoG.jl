@@ -69,38 +69,41 @@ function interpolate_nu_cheb!(
 end
 
 
-function update_poses_new!(poses_new::Vector{NTuple{2, T}}, poses::Vector{NTuple{3, T}}) where{T}
-    for i in 1:length(poses)
-        poses_new[i] = (poses[i][1], poses[i][2])
+@inbounds function interpolate_thin_single!(q::T, pos::NTuple{3, T}, pad_grid::Array{Complex{T}, 3}, gridinfo::GridInfo{2, T}, cheb_value::Vector{Array{T, 1}}, cheb_coefs::NTuple{2, ChebCoef{T}}, r_z::Vector{T}, Taylor_order::Int, L_z::T) where{T}
+
+    idl = gridinfo.index_list
+    pos_new = (pos[1], pos[2])
+
+    near_id_image = image_grid_id(pos_new, gridinfo)
+    near_pos_image = image_grid_pos(near_id_image, gridinfo)
+    for i in 1:2
+        dx = pos[i] - near_pos_image[i]
+        pwcheb_eval!(dx, cheb_value[i], cheb_coefs[i])
     end
-    return poses_new
-end
 
-function update_qs_new!(qs_new::Vector{T}, qs::Vector{T}, poses::Vector{NTuple{3, T}}, r_z::T, j::Int, Lz::T) where{T}
-    for i in 1:length(qs)
-        qs_new[i] = qs[i] * ((poses[i][3] - r_z) / Lz)^(2 * (j - 1))
-    end
-    return qs_new
-end
-
-function interpolate_thin!(
-    qs::Vector{T}, poses::Vector{NTuple{3, T}}, qs_new::Vector{T}, poses_new::Vector{NTuple{2, T}}, L::NTuple{3, T},
-    gridinfo::GridInfo{2, T}, gridboxs::Array{GridBox{2, T}, 2}, cheb_coefs::NTuple{2, ChebCoef{T}},
-    r_z::Vector{T}
-    ) where{T}
-    
-    R_z, Taylor_Q = size(gridboxs)
-    update_poses_new!(poses_new, poses)
-
-    for i in 1:R_z
-        r_zi = r_z[i]
-        for j in 1:Taylor_Q
-            update_qs_new!(qs_new, qs, poses, r_zi, j, L[3])
-            interpolate!(qs_new, poses_new, gridinfo, gridboxs[i, j], cheb_coefs)
+    for i in gridinfo.iter_list
+        image_id = near_id_image.id .+ i
+        for k in 1:size(pad_grid, 3)
+            qn = q * ((pos[3] - r_z[k]) / L_z)^(2 * (Taylor_order - 1))
+            pad_grid[idl[1][image_id[1]], idl[2][image_id[2]], k] += Complex{T}(qn * prod(cheb_value[j][i[j] + gridinfo.w[j] + 1] for j in 1:2))
         end
     end
 
-    return gridboxs
+    return nothing
+end
+
+@inbounds function interpolate_thin!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, pad_grids::Vector{Array{Complex{T}, 3}}, gridinfo::GridInfo{2, T}, cheb_value::Vector{Array{T, 1}}, cheb_coefs::NTuple{2, ChebCoef{T}}, r_z::Vector{T}, L_z::T) where{T}
+
+    @assert length(qs) == length(poses)
+    set_zeros!.(pad_grids)
+
+    for Taylor_order in 1:length(pad_grids)
+        for i in 1:length(qs)
+            interpolate_thin_single!(qs[i], poses[i], pad_grids[Taylor_order], gridinfo, cheb_value, cheb_coefs, r_z, Taylor_order, L_z)
+        end
+    end
+
+    return nothing
 end
 
 function ϕkz_direct(z0::T, qs::Vector{T}, poses::Vector{NTuple{3, T}}, k_x::T, k_y::T, uspara::USeriesPara{T}, M_mid::Int) where{T}

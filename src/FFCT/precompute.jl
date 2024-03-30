@@ -42,27 +42,12 @@ end
     return nothing
 end
 
-@inbounds function revise_phase_neg_all!(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, phase_xs::Array{Complex{T}, 2}, phase_ys::Array{Complex{T}, 2}, phase_xys::Array{Complex{T}, 3}, k_x::Vector{T}, k_y::Vector{T}) where{T}
-
-    for n in 1:size(poses, 1)
-        x, y, z = poses[n]
-        revise_phase_neg!((@view phase_xs[:, n]), (@view phase_ys[:, n]), k_x, k_y, x - L[1]/2, y - L[2]/2)
-    end
-
-    for n in 1:size(phase_xys, 3), j in 1:size(phase_xys, 2), i in 1:size(phase_xys, 1)
-        phase_xys[i, j, n] = phase_xs[i, n] * phase_ys[j, n] * qs[n]
-    end
-
-    return nothing
-end
-
-function thin_paras_gen(N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, L::NTuple{3, T}, cheb_order::Int, uspara::USeriesPara{T}, Taylor_Q::Int) where{T}
+function thin_grids_gen(N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, L::NTuple{3, T}, cheb_order::Int, uspara::USeriesPara{T}, Taylor_Q::Int) where{T}
     periodicity = (true, true)
     extra_pad = (0, 0)
 
     gridinfo = GridInfo(N_real, w, periodicity, extra_pad, (L[1], L[2]))
-    gridboxs = Array{GridBox{2, T}, 2}(undef, R_z, Taylor_Q)
-    fill!(gridboxs, GridBox(gridinfo))
+    pad_grids = [zeros(Complex{T}, N_real[1], N_real[2], R_z) for i in 1:Taylor_Q]
 
     f_window = [x -> Wkb(x, (w[i] + 0.5) * gridinfo.h[i], β[i]) for i in 1:2]
     cheb_coefs = tuple([ChebCoef(f_window[i], gridinfo.h[i], w[i], cheb_order) for i in 1:2]...)
@@ -77,21 +62,17 @@ function thin_paras_gen(N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β:
     sf0 = ScalingFactor(func_scale, gridinfo)
     scalefactors = [ScalingFactor(func_scale, sf0.factors .* taylor_mats[i]) for i in 1:Taylor_Q]
 
-    return (gridinfo, gridboxs, cheb_coefs, scalefactors)
+    return (gridinfo, pad_grids, cheb_coefs, scalefactors)
 end
 
-function thin_precompute(N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, L::NTuple{3, T}, cheb_order::Int, uspara::USeriesPara{T}, Taylor_Q::Int, n_atoms::Int) where{T}
-    gridinfo, gridboxs, cheb_coefs, scalefactors = thin_paras_gen(N_real, R_z, w, β, L, cheb_order, uspara, Taylor_Q)
-    qs_new = zeros(T, n_atoms)
-    poses_new = Vector{NTuple{2, T}}(undef, n_atoms)
-    fill!(poses_new, (zero(T), zero(T)))
+function thin_paras_gen(N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, L::NTuple{3, T}, cheb_order::Int, uspara::USeriesPara{T}, Taylor_Q::Int) where{T}
+    gridinfo, pad_grids, cheb_coefs, scalefactors = thin_grids_gen(N_real, R_z, w, β, L, cheb_order, uspara, Taylor_Q)
 
     H_r = zeros(Complex{T}, N_real[1], N_real[2], R_z)
     H_c = zeros(Complex{T}, N_real[1], N_real[2], R_z)
-    H_s = zeros(Complex{T}, N_real[1], N_real[2], R_z)
 
-    cheb_value = [similar(gridboxs[1,1].cheb_value[1]) for i in 1:2]
+    cheb_value = [zeros(T, size(cheb_coefs[i].coef, 1) - 1) for i in 1:2]
     r_z = Vector{T}([L[3] / 2 * ( 1.0 - cos((2i - 1)*π / 2R_z) ) for i in 1:R_z])
 
-    return gridinfo, gridboxs, cheb_coefs, scalefactors, qs_new, poses_new, H_r, H_c, H_s, cheb_value, r_z
+    return gridinfo, pad_grids, cheb_coefs, scalefactors, H_r, H_c, cheb_value, r_z
 end

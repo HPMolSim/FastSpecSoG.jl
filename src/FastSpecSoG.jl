@@ -19,8 +19,9 @@ export long_energy_us_k, long_energy_us_0, long_energy_sw_0, long_energy_sw_k
 export SoePara, SoePara4, SoePara8, SoePara16
 
 export TaylorUSeries_k, TaylorUSeries
-export fft_Q2d!, ifft_Q2d!, scale_thin!, scaling_Q2D!
-export thin_precompute, energy_thin_k
+export thin_paras_gen, interpolate_thin!, gather_thin, scale_thin!
+export piecewise_fft!, piecewise_ifft!, piecewise_mul!
+export energy_long_thin_k
 
 include("types.jl")
 
@@ -31,7 +32,7 @@ include("FFCT/precompute.jl")
 include("FFCT/interpolate.jl")
 include("FFCT/gather.jl")
 include("FFCT/zeroth_order.jl")
-include("FFCT/cheb_interpolate.jl")
+include("FFCT/Chebyshev.jl")
 include("FFCT/Taylor.jl")
 include("FFCT/scaling.jl")
 

@@ -1,6 +1,6 @@
 using FastSpecSoG
 using Test
-using ExTinyMD, EwaldSummations, TaylorSeries, FFTW
+using ExTinyMD, EwaldSummations, TaylorSeries, FFTW, Polynomials
 using Random
 # Random.seed!(1234)
 
@@ -11,8 +11,8 @@ using Random
     include("energy_mid.jl")
     include("interpolate.jl")
     include("energy_long.jl")
-    include("cheb_interpolate.jl")
+    include("Chebyshev.jl")
     include("Taylor.jl")
-    # include("energy_thin.jl")
+    include("energy_thin.jl")
     include("scaling.jl")
 end

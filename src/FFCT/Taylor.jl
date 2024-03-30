@@ -24,13 +24,15 @@ end
 function TaylorUSeries_k(k_xi::T, k_yj::T, L_z::T, uspara::USeriesPara{T}, M_mid::Int, Q::Int) where{T}
     coefs = zeros(T, Q)
     k2 = k_xi^2 + k_yj^2
-    for l in M_mid + 1:length(uspara.sw)
-        sl, wl = uspara.sw[l]
-        for n in 0:Q - 1
-            coefs[n + 1] += (-1)^n * π * wl * sl^2 * exp(-sl^2 * k2 / 4) * special_powern(L_z^2 / sl^2, n)
+    if !(k2 ≈ zero(T))
+        for l in M_mid + 1:length(uspara.sw)
+            sl, wl = uspara.sw[l]
+            for n in 0:Q - 1
+                coefs[n + 1] += (-1)^n * π * wl * sl^2 * exp(-sl^2 * k2 / 4) * special_powern(L_z^2 / sl^2, n)
+            end
         end
     end
-    return Polynomial(coefs)
+    return coefs
 end
 
 function TaylorUSeries(k_x::Vector{T}, k_y::Vector{T}, L_z::T, uspara::USeriesPara{T}, M_mid::Int, Q::Int) where{T}
@@ -39,9 +41,9 @@ function TaylorUSeries(k_x::Vector{T}, k_y::Vector{T}, L_z::T, uspara::USeriesPa
 
     for i in 1:length(k_x)
         for j in 1:length(k_y)
-            poly = TaylorUSeries_k(k_x[i], k_y[j], L_z, uspara, M_mid, Q)
+            coefs = TaylorUSeries_k(k_x[i], k_y[j], L_z, uspara, M_mid, Q)
             for k in 1:Q
-                taylor_mats[k][i, j] = poly.coeffs[k]
+                taylor_mats[k][i, j] = coefs[k]
             end
         end
     end
