@@ -5,7 +5,7 @@ using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, SumOfExpVPMR,
 import FastChebInterp: ChebPoly
 
 export USeriesPara, U_series, BSA, ChebUSeries, proper_M
-export FSSoG_naive, FSSoGInteraction
+export FSSoG_naive, FSSoGInteraction, FSSoGThinInteraction
 export short_energy_naive, long_energy_naive, energy_naive
 
 export Es_Cheb_precompute, short_energy_Cheb
@@ -39,7 +39,6 @@ include("FFCT/scaling.jl")
 include("energy/energy_short.jl")
 include("energy/energy_mid.jl")
 include("energy/energy_long.jl")
-include("energy/energy_thin.jl")
 
 include("energy/energy.jl")
 include("energy/energy_short_naive.jl")

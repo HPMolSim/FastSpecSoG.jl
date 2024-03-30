@@ -59,3 +59,7 @@ end
 function energy_short(interaction::FSSoGInteraction{T}, neighbor::CellList3D{T}) where{T}
     return short_energy_Cheb(interaction.uspara_cheb, interaction.r_c, interaction.F0, interaction.boundary, neighbor, interaction.position, interaction.charge) / interaction.ϵ
 end
+
+function energy_short(interaction::FSSoGThinInteraction{T}, neighbor::CellList3D{T}) where{T}
+    return short_energy_Cheb(interaction.uspara_cheb, interaction.r_c, interaction.F0, interaction.boundary, neighbor, interaction.position, interaction.charge) / interaction.ϵ
+end
