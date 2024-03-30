@@ -61,6 +61,9 @@ function U_series(x::T, uspara::USeriesPara{T}) where{T}
 end
 
 function proper_M(η::T, L_z::T, uspara::USeriesPara{T}) where{T}
+    if uspara.sw[1][1] > η * L_z
+        return 0
+    end
     for i in 1:length(uspara.sw) - 1
         (s, w) = uspara.sw[i]
         (sp, wp) = uspara.sw[i + 1]
