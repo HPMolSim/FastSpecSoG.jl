@@ -1,6 +1,8 @@
 [deps]
 EwaldSummations = "329efeb5-5dc7-45f3-8303-d0bcfeef1c8a"
 ExTinyMD = "fec76197-d59f-46dd-a0ed-76a83c21f7aa"
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 TaylorSeries = "6aa5eb33-94cf-58f4-a9d0-e4b2c4fc25ea"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

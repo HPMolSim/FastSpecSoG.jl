@@ -48,16 +48,44 @@ mutable struct FSSoGInteraction{T} <: ExTinyMD.AbstractInteraction
     r_z::Vector{T}
     phase_x::Vector{Complex{T}}
     phase_y::Vector{Complex{T}}
-    us_mat::Array{Complex{T}, 3}
-    b_l::Array{Complex{T}, 2}
-    b_u::Array{Complex{T}, 2}
-    rhs::Vector{Complex{T}}
-    sol::Vector{Complex{T}}
-    ivsm::Array{T, 4}
     H_r::Array{Complex{T}, 3}
     H_c::Array{Complex{T}, 3}
-    H_s::Array{Complex{T}, 3}
     cheb_mat::Array{ChebPoly{1, T, T}, 2}
+
+    # for FFCT zero order term
+    z::Vector{T}
+    sort_z::Vector{Int}
+    soepara::SoePara{Complex{T}}
+end
+
+mutable struct FSSoGThinInteraction{T} <: ExTinyMD.AbstractInteraction
+    b::T
+    σ::T
+    ω::T
+    M::Int
+    ϵ::T
+    L::NTuple{3, T}
+    boundary::Boundary{T}
+    n_atoms::Int
+
+    uspara::USeriesPara{T}
+    position::Vector{NTuple{3, T}}
+    charge::Vector{T}
+
+    # for short range
+    uspara_cheb::ChebPoly{1, T, T}
+    r_c::T
+    F0::T
+
+    # for long range by 2dfft
+    r_z::Vector{T}
+    H_r::Array{Complex{T}, 3}
+    H_c::Array{Complex{T}, 3}
+    gridinfo::GridInfo{2, T}
+    pad_grids::Vector{Array{Complex{T}, 3}}
+    scalefactors::Vector{ScalingFactor{2, T}}
+    cheb_coefs::NTuple{2, ChebCoef{T}}
+    cheb_value::Vector{Array{T, 1}}
 
     # for FFCT zero order term
     z::Vector{T}
