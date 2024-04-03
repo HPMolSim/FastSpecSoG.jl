@@ -102,15 +102,13 @@ function long_energy_us_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, accuracy::
     @assert M_min ≥ 1
     @assert M_max ≤ length(uspara.sw)
 
-    Ek = zero(T)
-
-    for l in M_min:M_max
+   Ek = @distributed (+) for l in M_min:M_max
         s, w = uspara.sw[l]
         # accuracy = exp(-k^2 * s^2 / 4)
         km = sqrt(-4 * log(accuracy) / s^2)
         # km = π * n / max{L_x, L_y, L_z}
         cutoff = ceil(Int, km * maximum(L) / 2π) + 1
-        Ek += long_energy_sw_k(qs, poses, cutoff, L, s, w)
+        long_energy_sw_k(qs, poses, cutoff, L, s, w)
     end
     @debug "long range energy, direct su, k" Ek
 
@@ -121,11 +119,9 @@ function long_energy_us_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{
     @assert M_min ≥ 1
     @assert M_max ≤ length(uspara.sw)
 
-    E0 = zero(T)
-
-    for l in M_min:M_max
+    E0 = @distributed (+) for l in M_min:M_max
         s, w = uspara.sw[l]
-        E0 += long_energy_sw_0(qs, poses, L, s, w)
+        long_energy_sw_0(qs, poses, L, s, w)
     end
     @debug "long range energy, direct sum, zeroth mode" E0
 

@@ -1,5 +1,6 @@
 module FastSpecSoG
 
+using Distributed
 using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, SumOfExpVPMR, LoopVectorization, OMEinsum, FastChebInterp, Polynomials, FFTW
 
 import FastChebInterp: ChebPoly
