@@ -87,11 +87,9 @@ function long_energy_us_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::In
     @assert M_min ≥ 1
     @assert M_max ≤ length(uspara.sw)
 
-    Ek = zero(T)
-
-    for l in M_min:M_max
+    Ek = @distributed (+) for l in M_min:M_max
         s, w = uspara.sw[l]
-        Ek += long_energy_sw_k(qs, poses, cutoff, L, s, w)
+        long_energy_sw_k(qs, poses, cutoff, L, s, w)
     end
     @debug "long range energy, direct su, k" Ek
 
