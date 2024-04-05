@@ -31,31 +31,28 @@ end
 
 function long_energy_sw_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::Int, L::NTuple{3, T}, s::T, w::T) where{T}
 
-    E = zero(T)
     n_atoms = length(qs)
 
-    for i in 1:n_atoms
+    E = @distributed (+) for n in CartesianIndices((n_atoms, n_atoms))
+        i, j = Tuple(n)
         qi = qs[i]
         xi, yi, zi = poses[i]
+        qj = qs[j]
+        xj, yj, zj = poses[j]
 
-        for j in 1:n_atoms
-            ϕ_ij = zero(T)
-            qj = qs[j]
-            xj, yj, zj = poses[j]
-
-            for m_x in -cutoff:cutoff
-                kx = 2π * m_x / L[1]
-                for m_y in -cutoff:cutoff
-                    ky = 2π * m_y / L[2]
-                    k = sqrt(kx^2 + ky^2)
-                    if !((m_x == 0) && (m_y == 0))
-                        ϕ_ij += w * s^2 * exp( - (zi - zj)^2 / s^2) * exp(-s^2 * k^2 / 4) * cos(kx * (xi - xj) + ky * (yi - yj))
-                    end
+        ϕ_ij = zero(T)
+        for m_x in -cutoff:cutoff
+            kx = 2π * m_x / L[1]
+            for m_y in -cutoff:cutoff
+                ky = 2π * m_y / L[2]
+                k = sqrt(kx^2 + ky^2)
+                if !((m_x == 0) && (m_y == 0))
+                    ϕ_ij += w * s^2 * exp( - (zi - zj)^2 / s^2) * exp(-s^2 * k^2 / 4) * cos(kx * (xi - xj) + ky * (yi - yj))
                 end
             end
-
-            E += qi * qj * ϕ_ij
         end
+
+        qi * qj * ϕ_ij
     end
 
     return E * π / (2 * L[1] * L[2])
@@ -63,21 +60,18 @@ end
 
 function long_energy_sw_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, s::T, w::T) where{T}
 
-    E = zero(T)
     n_atoms = length(qs)
 
-    for i in 1:n_atoms
+    E = @distributed (+) for n in CartesianIndices((n_atoms, n_atoms))
+        i, j = Tuple(n)
         qi = qs[i]
         xi, yi, zi = poses[i]
+        qj = qs[j]
+        xj, yj, zj = poses[j]
 
-        for j in 1:n_atoms
-            qj = qs[j]
-            xj, yj, zj = poses[j]
+        ϕ_ij = w * s^2 * exp( - (zi - zj)^2 / s^2)
 
-            ϕ_ij = w * s^2 * exp( - (zi - zj)^2 / s^2)
-
-            E += qi * qj * ϕ_ij
-        end
+        qi * qj * ϕ_ij
     end
 
     return E * π / (2 * L[1] * L[2])
@@ -87,9 +81,10 @@ function long_energy_us_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::In
     @assert M_min ≥ 1
     @assert M_max ≤ length(uspara.sw)
 
-    Ek = @distributed (+) for l in M_min:M_max
+    Ek = zero(T)
+    for l in M_min:M_max
         s, w = uspara.sw[l]
-        long_energy_sw_k(qs, poses, cutoff, L, s, w)
+        Ek += long_energy_sw_k(qs, poses, cutoff, L, s, w)
     end
     @debug "long range energy, direct su, k" Ek
 
@@ -100,13 +95,14 @@ function long_energy_us_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, accuracy::
     @assert M_min ≥ 1
     @assert M_max ≤ length(uspara.sw)
 
-   Ek = @distributed (+) for l in M_min:M_max
+    Ek = zero(T)
+    for l in M_min:M_max
         s, w = uspara.sw[l]
         # accuracy = exp(-k^2 * s^2 / 4)
         km = sqrt(-4 * log(accuracy) / s^2)
         # km = π * n / max{L_x, L_y, L_z}
         cutoff = ceil(Int, km * maximum(L) / 2π) + 1
-        long_energy_sw_k(qs, poses, cutoff, L, s, w)
+        Ek += long_energy_sw_k(qs, poses, cutoff, L, s, w)
     end
     @debug "long range energy, direct su, k" Ek
 
@@ -117,9 +113,10 @@ function long_energy_us_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{
     @assert M_min ≥ 1
     @assert M_max ≤ length(uspara.sw)
 
-    E0 = @distributed (+) for l in M_min:M_max
+    E0 = zero(T)
+    for l in M_min:M_max
         s, w = uspara.sw[l]
-        long_energy_sw_0(qs, poses, L, s, w)
+        E0 += long_energy_sw_0(qs, poses, L, s, w)
     end
     @debug "long range energy, direct sum, zeroth mode" E0
 
