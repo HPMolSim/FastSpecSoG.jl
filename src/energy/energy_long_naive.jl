@@ -33,7 +33,8 @@ function long_energy_sw_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::In
 
     n_atoms = length(qs)
 
-    E = @distributed (+) for n in CartesianIndices((n_atoms, n_atoms))
+    E = Atomic{T}(zero(T))
+    @threads for n in CartesianIndices((n_atoms, n_atoms))
         i, j = Tuple(n)
         qi = qs[i]
         xi, yi, zi = poses[i]
@@ -52,17 +53,19 @@ function long_energy_sw_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::In
             end
         end
 
-        qi * qj * ϕ_ij
+        atomic_add!(E, qi * qj * ϕ_ij)
     end
 
-    return E * π / (2 * L[1] * L[2])
+    return E[] * π / (2 * L[1] * L[2])
 end
 
 function long_energy_sw_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, s::T, w::T) where{T}
 
     n_atoms = length(qs)
 
-    E = @distributed (+) for n in CartesianIndices((n_atoms, n_atoms))
+    E = Atomic{T}(zero(T))
+
+    @threads for n in CartesianIndices((n_atoms, n_atoms))
         i, j = Tuple(n)
         qi = qs[i]
         xi, yi, zi = poses[i]
@@ -71,10 +74,10 @@ function long_energy_sw_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{
 
         ϕ_ij = w * s^2 * exp( - (zi - zj)^2 / s^2)
 
-        qi * qj * ϕ_ij
+        atomic_add!(E, qi * qj * ϕ_ij)
     end
 
-    return E * π / (2 * L[1] * L[2])
+    return E[] * π / (2 * L[1] * L[2])
 end
 
 function long_energy_us_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::Int, L::NTuple{3, T}, uspara::USeriesPara{T}, M_min::Int, M_max::Int) where{T}
