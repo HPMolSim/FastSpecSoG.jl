@@ -82,7 +82,7 @@ function long_energy_sw_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{
     @threads for i in 1:n_atoms
         qi = qs[i]
         xi, yi, zi = poses[i]
-        t = big(zero(T))
+        t = Double64(zero(T))
         for j in 1:n_atoms
             qj = qs[j]
             xj, yj, zj = poses[j]
