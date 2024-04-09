@@ -17,7 +17,7 @@ export real2Cheb!, Cheb2real!, gather_nu
 export energy_long_loop_k, energy_long_cheb_k, energy_long_0
 
 export long_energy_us_k, long_energy_us_0, long_energy_sw_0, long_energy_sw_k
-export SoePara, SoePara4, SoePara8, SoePara16
+export FGT1d, FGT1d_naive, zeroth_order
 
 export TaylorUSeries_k, TaylorUSeries
 export thin_paras_gen, interpolate_thin!, gather_thin, scale_thin!

@@ -1,3 +1,17 @@
+"""
+    long_energy_naive(interaction, position, charge)
+
+Compute the long-range energy using a naive approach.
+
+# Arguments
+- `interaction`: The FSSoG_naive object representing the interaction parameters.
+- `position`: A vector of 3D positions of the charges.
+- `charge`: A vector of charges.
+
+# Returns
+The computed long-range energy.
+
+"""
 function long_energy_naive(interaction::FSSoG_naive{T}, position::Vector{NTuple{3, T}}, charge::Vector{T}) where{T}
     energy = zero(T)
     for K in interaction.k_set

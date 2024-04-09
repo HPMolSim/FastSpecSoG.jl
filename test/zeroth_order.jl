@@ -1,21 +1,18 @@
-@testset "zeroth_order by SOE" begin
-
-    n_atoms = 100
+@testset "FGT1d by chebshev" begin
+    n_atoms = 256
     L = 20.0
-    poses = [ (rand() * L, rand() * L, rand() * L) for i in 1:n_atoms ]
-    qs = [ (-1.0)^i for i in 1:n_atoms ]
-    z = [ poses[i][3] for i in 1:n_atoms ]
-    sort_z = sortperm(z)
-    soepara = SoePara16()
+    Q0 = 64
 
-    for preset in 1:6
-        uspara = USeriesPara(preset)
-        M_mid = 0
+    qs = [(-1.0)^i for i in 1:n_atoms]
+    poses = [(rand() * L, rand() * L, rand() * L) for i in 1:n_atoms]
 
-        E0_soe = zeroth_order(qs, z, soepara, uspara, sort_z, (L, L, L), M_mid)
-        E0_direct = long_energy_us_0(qs, poses, (L, L, L), uspara, 1, length(uspara.sw))
+    uspara = USeriesPara(6)
 
-        @show E0_soe, E0_direct, abs(E0_soe - E0_direct)
-        # @test abs(E0_soe - E0_direct) < 1e-14
+    for l in 10:length(uspara.sw)
+        s, w = uspara.sw[l]
+        E_FGT = FGT1d(qs, poses, s, L, Q0)
+        E_naive = FGT1d_naive(qs, poses, s)
+        # @show l, E_FGT, E_naive, E_FGT - E_naive
+        @test E_FGT ≈ E_naive
     end
 end
