@@ -79,19 +79,21 @@ function long_energy_sw_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{
 
     E = Atomic{T}(zero(T))
 
-    @threads for n in CartesianIndices((n_atoms, n_atoms))
-        i, j = Tuple(n)
+    @threads for i in 1:n_atoms
         qi = qs[i]
         xi, yi, zi = poses[i]
-        qj = qs[j]
-        xj, yj, zj = poses[j]
+        t = big(zero(T))
+        for j in 1:n_atoms
+            qj = qs[j]
+            xj, yj, zj = poses[j]
 
-        ϕ_ij = w * s^2 * exp( - (zi - zj)^2 / s^2)
+            t += qj * exp( - big(zi - zj)^2 / s^2)
+        end
 
-        atomic_add!(E, qi * qj * ϕ_ij)
+        atomic_add!(E, qi * T(t))
     end
 
-    return E[] * π / (2 * L[1] * L[2])
+    return w * s^2 * E[] * π / (2 * L[1] * L[2])
 end
 
 function long_energy_us_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::Int, L::NTuple{3, T}, uspara::USeriesPara{T}, M_min::Int, M_max::Int) where{T}

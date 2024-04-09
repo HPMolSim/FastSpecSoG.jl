@@ -42,7 +42,7 @@ function FSSoGInteraction(
     L::NTuple{3, T}, n_atoms::Int,
     r_c::T, Q_short::Int, r_min::T,
     N_real_mid::NTuple{3, Int}, w::NTuple{3, Int}, β::NTuple{3, T}, extra_pad_ratio::Int, cheb_order::Int, M_mid::Int, 
-    N_grid_long::NTuple{3, Int}, Q_long::Int, soepara::SoePara{Complex{T}}; 
+    N_grid_long::NTuple{3, Int}, Q_long::Int, Q_0::Int; 
     ϵ::T = one(T)) where{T}
 
     uspara = USeriesPara(b, σ, ω, M)
@@ -58,31 +58,33 @@ function FSSoGInteraction(
     gridinfo, gridbox, cheb_coefs, scalefactor = mid_paras_gen(N_real_mid, w, β, L, extra_pad_ratio, cheb_order, uspara, M_mid)
     
     # some of these term are for other methods, not used
-    k_x, k_y, r_z, H_r, H_c, phase_x, phase_y, sort_z, z = long_paras_gen(L, N_grid_long, n_atoms)
+    k_x, k_y, r_z, H_r, H_c, phase_x, phase_y = long_paras_gen(L, N_grid_long)
     cheb_mat = ChebUSeries(k_x, k_y, L[3], uspara, M_mid, Q_long)
 
-    return FSSoGInteraction{T}(b, σ, ω, M, ϵ, L, boundary, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, gridinfo, gridbox, cheb_coefs, scalefactor, M_mid, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, cheb_mat, z, sort_z, soepara)
+    r_z0, grids0, chebcoefs0 = zero_paras_gen(L[3], Q_0)
+
+    return FSSoGInteraction{T}(b, σ, ω, M, ϵ, L, boundary, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, gridinfo, gridbox, cheb_coefs, scalefactor, M_mid, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, cheb_mat, Q_0, r_z0, chebcoefs0, grids0)
 end
 
 function FSSoGInteraction(
     L::NTuple{3, T}, n_atoms::Int,
     r_c::T, Q_short::Int, r_min::T,
     N_real_mid::NTuple{3, Int}, w::NTuple{3, Int}, β::NTuple{3, T}, extra_pad_ratio::Int, cheb_order::Int, M_mid::Int, 
-    N_grid_long::NTuple{3, Int}, Q_long::Int, soepara::SoePara{Complex{T}}; 
+    N_grid_long::NTuple{3, Int}, Q_long::Int, Q_0::Int; 
     preset::Int = 1, ϵ::T = one(T)) where{T}
 
     @assert preset ≤ length(preset_parameters)
     
     b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]), T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
     
-    return FSSoGInteraction(b, σ, ω, M, L, n_atoms, r_c, Q_short, r_min, N_real_mid, w, β, extra_pad_ratio, cheb_order, M_mid, N_grid_long, Q_long, soepara, ϵ = ϵ)
+    return FSSoGInteraction(b, σ, ω, M, L, n_atoms, r_c, Q_short, r_min, N_real_mid, w, β, extra_pad_ratio, cheb_order, M_mid, N_grid_long, Q_long, Q_0, ϵ = ϵ)
 end
 
 function FSSoGThinInteraction(
     b::T, σ::T, ω::T, M::Int,
     L::NTuple{3, T}, n_atoms::Int,
     r_c::T, Q_short::Int, r_min::T,
-    N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, cheb_order::Int, Taylor_Q::Int, soepara::SoePara{Complex{T}}; 
+    N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, cheb_order::Int, Taylor_Q::Int, Q_0::Int; 
     ϵ::T = one(T)) where{T}
 
     uspara = USeriesPara(b, σ, ω, M)
@@ -96,21 +98,20 @@ function FSSoGThinInteraction(
 
     gridinfo, pad_grids, cheb_coefs, scalefactors, H_r, H_c, cheb_value, r_z = thin_paras_gen(N_real, R_z, w, β, L, cheb_order, uspara, Taylor_Q)
 
-    sort_z = zeros(Int, n_atoms)
-    z = zeros(T, n_atoms)
+    r_z0, grids0, chebcoefs0 = zero_paras_gen(L[3], Q_0)
 
-    return FSSoGThinInteraction{T}(b, σ, ω, M, ϵ, L, boundary, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, r_z, H_r, H_c, gridinfo, pad_grids, scalefactors, cheb_coefs, cheb_value, z, sort_z, soepara)
+    return FSSoGThinInteraction{T}(b, σ, ω, M, ϵ, L, boundary, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, r_z, H_r, H_c, gridinfo, pad_grids, scalefactors, cheb_coefs, cheb_value, Q_0, r_z0, chebcoefs0, grids0)
 end
 
 function FSSoGThinInteraction(
     L::NTuple{3, T}, n_atoms::Int,
     r_c::T, Q_short::Int, r_min::T,
-    N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, cheb_order::Int, Taylor_Q::Int, soepara::SoePara{Complex{T}}; 
+    N_real::NTuple{2, Int}, R_z::Int, w::NTuple{2, Int}, β::NTuple{2, T}, cheb_order::Int, Taylor_Q::Int, Q_0::Int; 
     preset::Int = 1, ϵ::T = one(T)) where{T}
 
     @assert preset ≤ length(preset_parameters)
     
     b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]), T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
     
-    return FSSoGThinInteraction(b, σ, ω, M, L, n_atoms, r_c, Q_short, r_min, N_real, R_z, w, β, cheb_order, Taylor_Q, soepara, ϵ = ϵ)
+    return FSSoGThinInteraction(b, σ, ω, M, L, n_atoms, r_c, Q_short, r_min, N_real, R_z, w, β, cheb_order, Taylor_Q, Q_0, ϵ = ϵ)
 end

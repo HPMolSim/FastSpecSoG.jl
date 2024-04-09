@@ -4,8 +4,17 @@
     return fill!(a, zero(T))
 end
 
+function zero_paras_gen(L_z::T, Q_0::Int) where{T}
+
+    r_z0 = Vector{T}([L_z / 2 * ( 1.0 - cos((2i - 1)*π / 2Q_0) ) for i in 1:Q_0])
+    grids0 = zeros(T, Q_0)
+    chebcoefs0 = zeros(T, Q_0)
+
+    return r_z0, grids0, chebcoefs0
+end
+
 # precompute the parameters to be used
-function long_paras_gen(L::NTuple{3, T}, N_grid::NTuple{3, Int}, n_atoms::Int) where{T}
+function long_paras_gen(L::NTuple{3, T}, N_grid::NTuple{3, Int}) where{T}
     L_x, L_y, L_z = L
     N_x, N_y, N_z = N_grid
     k_x = Vector{T}([2π * i / L_x for i in -N_x:N_x])
@@ -19,11 +28,8 @@ function long_paras_gen(L::NTuple{3, T}, N_grid::NTuple{3, Int}, n_atoms::Int) w
 
     phase_x = zeros(Complex{T}, 2N_x + 1)
     phase_y = zeros(Complex{T}, 2N_y + 1)
-
-    sort_z = zeros(Int, n_atoms)
-    z = zeros(T, n_atoms)
     
-    return k_x, k_y, r_z, H_r, H_c, phase_x, phase_y,  sort_z, z
+    return k_x, k_y, r_z, H_r, H_c, phase_x, phase_y
 end
 
 @inbounds function revise_phase_neg!(phase_x::AbstractArray{Complex{T}, 1}, phase_y::AbstractArray{Complex{T}, 1}, k_x::Vector{T}, k_y::Vector{T}, x::T, y::T) where{T}

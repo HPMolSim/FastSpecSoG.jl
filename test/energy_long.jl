@@ -9,16 +9,16 @@
 
     N_grid = (32, 32, 32)
     uspara = USeriesPara(2)
-    soepara = SoePara16()
     M_mid = 5
 
-    k_x, k_y, r_z, H_r, H_c, phase_x, phase_y, sort_z, z = long_paras_gen(L, N_grid, n_atoms)
+    k_x, k_y, r_z, H_r, H_c, phase_x, phase_y = long_paras_gen(L, N_grid)
     cheb_mat = ChebUSeries(k_x, k_y, L[3], uspara, M_mid, 64)
+    r_z0, grids0, chebcoefs0 = zero_paras_gen(L[3], 64)
 
     E_long_loop_k = energy_long_loop_k(qs, poses, L, M_mid, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, uspara)
     E_long_cheb_k = energy_long_cheb_k(qs, poses, L, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, cheb_mat)
 
-    E_long_0 = energy_long_0(qs, poses, L, M_mid, z, sort_z, uspara, soepara)
+    E_long_0 = energy_long_0(qs, poses, L, M_mid, uspara, r_z0, chebcoefs0, grids0)
 
     @info "running the direct summation for the long range part of the energy"
     # using the direct summation
@@ -76,7 +76,7 @@ end
     uspara = USeriesPara(1)
     M_mid = 0
 
-    k_x, k_y, r_z, H_r, H_c, phase_x, phase_y,  sort_z, z = long_paras_gen(L, N_grid, n_atoms)
+    k_x, k_y, r_z, H_r, H_c, phase_x, phase_y = long_paras_gen(L, N_grid)
     cheb_mat = ChebUSeries(k_x, k_y, L[3], uspara, M_mid, 64)
 
     E_long_loop_k = energy_long_loop_k(qs, poses, L, M_mid, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, uspara)

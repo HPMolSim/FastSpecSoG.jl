@@ -53,9 +53,10 @@ mutable struct FSSoGInteraction{T} <: ExTinyMD.AbstractInteraction
     cheb_mat::Array{ChebPoly{1, T, T}, 2}
 
     # for FFCT zero order term
-    z::Vector{T}
-    sort_z::Vector{Int}
-    soepara::SoePara{Complex{T}}
+    Q_0::Int
+    r_z0::Vector{T}
+    chebcoefs0::Vector{T}
+    grids0::Vector{T}
 end
 
 mutable struct FSSoGThinInteraction{T} <: ExTinyMD.AbstractInteraction
@@ -87,8 +88,9 @@ mutable struct FSSoGThinInteraction{T} <: ExTinyMD.AbstractInteraction
     cheb_coefs::NTuple{2, ChebCoef{T}}
     cheb_value::Vector{Array{T, 1}}
 
-    # for FFCT zero order term
-    z::Vector{T}
-    sort_z::Vector{Int}
-    soepara::SoePara{Complex{T}}
+    # for zero order term
+    Q_0::Int
+    r_z0::Vector{T}
+    chebcoefs0::Vector{T}
+    grids0::Vector{T}
 end

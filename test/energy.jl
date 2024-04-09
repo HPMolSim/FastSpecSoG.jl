@@ -35,9 +35,10 @@
 
     N_grid = (32, 32, 32)
     Q = 24
+    Q_0 = 32
     r_c = 10.0
 
-    fssog_interaction = FSSoGInteraction((L, L, L), n_atoms, r_c, Q, 0.5, N_real, w, β, extra_pad_ratio, cheb_order, M_mid, N_grid, Q, SoePara16(); preset = preset, ϵ = 1.0)
+    fssog_interaction = FSSoGInteraction((L, L, L), n_atoms, r_c, Q, 0.5, N_real, w, β, extra_pad_ratio, cheb_order, M_mid, N_grid, Q, Q_0; preset = preset, ϵ = 1.0)
 
     fssog_neighbor = CellList3D(info, fssog_interaction.r_c, fssog_interaction.boundary, 1)
     energy_sog = ExTinyMD.energy(fssog_interaction, fssog_neighbor, info, atoms)
@@ -79,10 +80,11 @@ end
     cheb_order = 16
     preset = 2
     Q = 24
+    Q_0 = 32
     Taylor_Q = 24
     r_c = 10.0
 
-    fssog_interaction = FSSoGThinInteraction((Lx, Ly, Lz), n_atoms, r_c, Q, 0.5, N_real, R_z, w, β, cheb_order, Taylor_Q, SoePara16(); preset = preset, ϵ = 1.0)
+    fssog_interaction = FSSoGThinInteraction((Lx, Ly, Lz), n_atoms, r_c, Q, 0.5, N_real, R_z, w, β, cheb_order, Taylor_Q, Q_0; preset = preset, ϵ = 1.0)
 
     fssog_neighbor = CellList3D(info, fssog_interaction.r_c, fssog_interaction.boundary, 1)
     energy_sog = ExTinyMD.energy(fssog_interaction, fssog_neighbor, info, atoms)
