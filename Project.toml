@@ -12,6 +12,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LoopVectorization = "bdcacae8-1622-11e9-2a5c-532679323890"
 OMEinsum = "ebe7aa44-baf0-506c-a96f-8464559b3922"
 Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
+Quadmath = "be4d8f0f-7fa4-5f49-b795-2f01399ab2dd"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 SumOfExpVPMR = "2c69873a-e0bb-44e1-90b4-d15ac3b7e936"
 

@@ -87,7 +87,7 @@ function long_energy_sw_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{
             qj = qs[j]
             xj, yj, zj = poses[j]
 
-            t += qj * exp( - big(zi - zj)^2 / s^2)
+            t += qj * exp( - Float128((zi - zj)^2 / s^2))
         end
 
         atomic_add!(E, qi * T(t))
