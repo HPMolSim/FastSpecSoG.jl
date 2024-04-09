@@ -1,3 +1,17 @@
+"""
+    long_energy_naive(interaction, position, charge)
+
+Compute the long-range energy using a naive approach.
+
+# Arguments
+- `interaction`: The FSSoG_naive object representing the interaction parameters.
+- `position`: A vector of 3D positions of the charges.
+- `charge`: A vector of charges.
+
+# Returns
+The computed long-range energy.
+
+"""
 function long_energy_naive(interaction::FSSoG_naive{T}, position::Vector{NTuple{3, T}}, charge::Vector{T}) where{T}
     energy = zero(T)
     for K in interaction.k_set
@@ -65,19 +79,21 @@ function long_energy_sw_0(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{
 
     E = Atomic{T}(zero(T))
 
-    @threads for n in CartesianIndices((n_atoms, n_atoms))
-        i, j = Tuple(n)
+    @threads for i in 1:n_atoms
         qi = qs[i]
         xi, yi, zi = poses[i]
-        qj = qs[j]
-        xj, yj, zj = poses[j]
+        t = big(zero(T))
+        for j in 1:n_atoms
+            qj = qs[j]
+            xj, yj, zj = poses[j]
 
-        ϕ_ij = w * s^2 * exp( - (zi - zj)^2 / s^2)
+            t += qj * exp( - big(zi - zj)^2 / s^2)
+        end
 
-        atomic_add!(E, qi * qj * ϕ_ij)
+        atomic_add!(E, qi * T(t))
     end
 
-    return E[] * π / (2 * L[1] * L[2])
+    return w * s^2 * E[] * π / (2 * L[1] * L[2])
 end
 
 function long_energy_us_k(qs::Vector{T}, poses::Vector{NTuple{3, T}}, cutoff::Int, L::NTuple{3, T}, uspara::USeriesPara{T}, M_min::Int, M_max::Int) where{T}

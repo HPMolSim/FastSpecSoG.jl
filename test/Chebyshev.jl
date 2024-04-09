@@ -21,7 +21,7 @@ end
     uspara = USeriesPara(2)
     M_mid = 0
 
-    k_x, k_y, r_z, H_r1, H_c, phase_x, phase_y,  sort_z, z = long_paras_gen(L, N_grid, n_atoms)
+    k_x, k_y, r_z, H_r1, H_c, phase_x, phase_y = long_paras_gen(L, N_grid)
     cheb_mat = ChebUSeries(k_x, k_y, L[3], uspara, M_mid, 64)
 
     H_r2 = copy(H_r1)

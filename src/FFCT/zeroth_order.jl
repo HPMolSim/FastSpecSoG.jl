@@ -1,59 +1,89 @@
-function zeroth_order(q::Vector{T}, z::Vector{T}, soepara::SoePara{Complex{T}}, uspara::USeriesPara{T}, sort_z::Vector{Int}, L::NTuple{3, T}, M_mid::Int) where{T}
+function proper_N(accuracy::T, η::T) where{T}
+    N = 0
+    t = one(T)
+    if η ≥ one(T)
+        return N
+    end
+
+    while t > η * accuracy
+        N += 1
+        t *= η / N
+    end
+    return N
+end
+
+function FGT1d(qs::Vector{T}, poses::Vector{NTuple{3, T}}, s::T, L_z::T, r_z::Vector{T}, chebcoefs::Vector{T}, grids::Vector{T}) where{T}
+    n_atoms = length(qs)
+    Q_0 = length(r_z)
+    # grids = zeros(T, Q_0)
+    # r_z = [L_z / 2 * ( 1.0 - cos((2i - 1)*π / (2 * Q_0)) ) for i in 1:Q_0]
+
+    set_zeros!(grids)
+    set_zeros!(chebcoefs)
+
+    # (L_z/s)^2N / factorials(N) < 1e-16
+    N = proper_N(1e-16, (L_z / s)^2)
+
+    for i in 1:n_atoms
+        q = qs[i]
+        for j in 1:Q_0
+            z = poses[i][3]
+            t = - (z - r_z[j])^2 / s^2
+            if N == 0
+                grids[j] += q * exp(t)
+            else
+                for k in 1:N
+                    grids[j] += q * special_powern(t, k)
+                end
+            end
+        end
+    end
+
+    # chebcoefs = zeros(T, Q_0)
+
+    for k in 1:Q_0, l in 1:Q_0
+        cheb_temp = k == 1 ? 0.5 : chebpoly(k - 1, r_z[l] - L_z / T(2), L_z / T(2))
+        chebcoefs[k] += 2 / Q_0 * grids[l] * cheb_temp
+    end
+
+    E_k0 = zero(T)
+    for i in 1:n_atoms
+        q = qs[i]
+        z = poses[i][3]
+        for k in 1:Q_0
+            E_k0 += q * chebcoefs[k] * chebpoly(k - 1, z - L_z / T(2), L_z / T(2))
+        end
+    end
+
+    return E_k0
+end
+
+function FGT1d_naive(qs::Vector{T}, poses::Vector{NTuple{3, T}}, s::T) where{T}
+    n_atoms = length(qs)
+    E_k0 = big(zero(T))
+
+    for i in 1:n_atoms, j in 1:n_atoms
+        qi = qs[i]
+        xi, yi, zi = poses[i]
+        qj = qs[j]
+        xj, yj, zj = poses[j]
+        E_k0 += qi * qj * exp( - big(zi - zj)^2 / s^2)
+    end
+
+    return Float64(E_k0)
+end
+
+
+function zeroth_order(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, uspara::USeriesPara{T}, M_mid::Int, r_z::Vector{T}, chebcoefs::Vector{T}, grids::Vector{T}) where{T}
+
     L_x, L_y, L_z = L
 
-    E_k0 = zero(Complex{T})
+    E_k0 = zero(T)
+
     for l in M_mid + 1:length(uspara.sw)
         sl, wl = uspara.sw[l]
-        E_k0 += wl * sl^2 * FET1d(q, q, z, soepara, α = sl, sort_x = sort_z)
+        E_k0 += wl * sl^2 * FGT1d(qs, poses, sl, L_z, r_z, chebcoefs, grids)
     end
 
-    return real(π * E_k0 / (2 * L_x * L_y))
+    return π * E_k0 / (2 * L_x * L_y)
 end
-
-function revise_z!(z::Vector{T}, sort_z::Vector{Int}, poses::Vector{NTuple{3, T}}) where{T}
-    for i in 1:length(poses)
-        z[i] = poses[i][3]
-    end
-    sortperm!(sort_z, z)
-    return z
-end
-
-SoePara4() = SoePara{ComplexF64}([
-    (2.48631398597651 - 0.897378323045937im, 0.826249456689224 - 1.78131068518845im),
-    (2.48631398597651 + 0.897378323045937im, 0.826249456689224 + 1.78131068518845im),
-    (2.40315018095227 - 2.83616068448077im, -0.326515398594273 + 0.111936582560313im),
-    (2.40315018095227 + 2.83616068448077im, -0.326515398594273 - 0.111936582560313im)
-])
-
-SoePara8() = SoePara{ComplexF64}([
-    (3.33815646978136 + 5.05854898587389im, -0.00886007694548523 + 0.0113042091292579im),
-    (3.33815646978136 - 5.05854898587389im, -0.00886007694548516 - 0.011304209129258im),
-    (3.53279071224249 + 0.653112650324427im, 2.97739506379945 + 6.91132455163189im),
-    (3.53279071224249 - 0.653112650324427im, 2.97739506379944 - 6.9113245516319im),
-    (3.50499106490061 + 1.98468086946842im, -2.89181556737244 - 1.11452178676621im),
-    (3.50499106490061 - 1.98468086946842im, -2.89181556737244 + 1.11452178676621im),
-    (3.44496629848779 + 3.40626818209147im, 0.423280530725485 - 0.16080466274867im),
-    (3.44496629848779 - 3.40626818209147im, 0.423280530725485 + 0.160804662748669im)
-])
-
-# the default 16 terms approach
-SoePara16() = SoePara{ComplexF64}([
-    (4.56160429581067 + 8.10664614462486im, 5.99673832958228e-6 - 1.68666706190233e-6im),
-    (4.56160429581067 - 8.10664614462486im, 5.99673832964075e-6 + 1.68666706179742e-6im),
-    (4.67614751620509 + 6.66817205403247im, -0.00128256763349392 + 5.69515998682304e-5im),
-    (4.67614751620509 - 6.66817205403247im, -0.00128256763349477 - 5.695159986638e-5im),
-    (4.75706771210077 + 5.46277771275372im, 0.0467989716657016 + 0.024842808276986im),
-    (4.75706771210077 - 5.46277771275372im, 0.0467989716657026 - 0.0248428082770166im),
-    (4.81739468471801 + 4.37139574323745im, -0.335267028777594 - 0.757075111679156im),
-    (4.81739468471801 - 4.37139574323745im, -0.335267028777571 + 0.757075111679353im),
-    (4.86201933938979 + 3.34750236244862im, -1.99598682670183 + 5.9922116425601im),
-    (4.86201933938979 - 3.34750236244862im, -1.99598682670221 - 5.99221164256101im),
-    (4.89345823682377 + 2.3658861273834im, 23.9009795446709 - 12.0862363354612im),
-    (4.89345823682377 - 2.3658861273834im, 23.9009795446732 + 12.0862363354632im),
-    (4.91338156910332 + 1.41021110952036im, -64.0632116678656 - 22.5380203666186im),
-    (4.91338156910332 - 1.41021110952036im, -64.0632116678705 + 22.5380203666172im),
-    (4.92300187934591 + 0.468589313154398im, 42.9479635779022 + 98.1965284307393im),
-    (4.92300187934591 - 0.468589313154398im, 42.9479635779079 - 98.1965284307392im),
-    (0.0334524767879181 + 0.0245907245253121im, 2.77886417555933e-16 - 1.05052462423441e-16im),
-    (0.0334524767879181 - 0.0245907245253121im, 2.77886412307273e-16 + 1.0505268058843e-16im)
-])

@@ -14,4 +14,5 @@ Random.seed!(1234)
     include("Chebyshev.jl")
     include("Taylor.jl")
     include("scaling.jl")
+    include("zeroth_order.jl")
 end
