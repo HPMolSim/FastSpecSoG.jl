@@ -67,7 +67,7 @@ function proper_M(η::T, L_z::T, uspara::USeriesPara{T}) where{T}
     for i in 1:length(uspara.sw) - 1
         (s, w) = uspara.sw[i]
         (sp, wp) = uspara.sw[i + 1]
-        if  s < η * L_z < sp
+        if  s ≤ η * L_z ≤ sp
             return i
         end
     end
