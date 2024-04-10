@@ -49,16 +49,18 @@ function interpolate_nu_cheb!(
         q = qs[n]
         revise_phase_neg!(phase_x, phase_y, k_x, k_y, x - L[1] / 2, y - L[2] / 2)
 
-        for k in 1:size(H_r, 3)
-            r_zk = r_z[k]
-            for j in 1:size(H_r, 2)
-                k_yj = k_y[j]
-                for i in 1:size(H_r, 1)
-                    k_xi = k_x[i]
-                    k2 = k_xi^2 + k_yj^2
-                    if !(k2 ≈ zero(T))
-                        phase = phase_x[i] * phase_y[j]
-                        H_r[i, j, k] += q * phase * cheb_mat[i, j](abs(z - r_zk))
+        
+        for j in 1:size(H_r, 2)
+            k_yj = k_y[j]
+            for i in 1:size(H_r, 1)
+                k_xi = k_x[i]
+                k2 = k_xi^2 + k_yj^2
+                if !(k2 ≈ zero(T))
+                    phase = phase_x[i] * phase_y[j]
+                    cheb_ij = cheb_mat[i, j]
+                    for k in 1:size(H_r, 3)
+                        r_zk = r_z[k]
+                        H_r[i, j, k] += q * phase * cheb_ij(abs(z - r_zk))
                     end
                 end
             end
