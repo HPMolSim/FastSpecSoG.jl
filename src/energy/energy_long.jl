@@ -1,11 +1,8 @@
 function energy_long_0(
-    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, M_mid::Int, 
-    uspara::USeriesPara{T}, r_z::Vector{T}, chebcoefs::Vector{T}, grids::Vector{T}
+    qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, chebuseries::ChebPoly{1, T, T}, r_z::Vector{T}, chebcoefs::Vector{T}, grids::Vector{T}
     ) where{T}
 
-    @assert M_mid ≤ length(uspara.sw)
-
-    E_0 = zeroth_order(qs, poses, L, uspara, M_mid, r_z, chebcoefs, grids)
+    E_0 = zeroth_order(qs, poses, L, chebuseries, r_z, chebcoefs, grids)
 
     return E_0
 end
@@ -14,7 +11,7 @@ function energy_long(interaction::FSSoGInteraction{T}) where{T}
 
     E_k = energy_long_cheb_k(interaction.charge, interaction.position, interaction.L, interaction.k_x, interaction.k_y, interaction.r_z, interaction.phase_x, interaction.phase_y, interaction.H_r, interaction.H_c, interaction.cheb_mat)
 
-    E_0 = energy_long_0(interaction.charge, interaction.position, interaction.L, interaction.M_mid, interaction.uspara, interaction.r_z0, interaction.chebcoefs0, interaction.grids0)
+    E_0 = energy_long_0(interaction.charge, interaction.position, interaction.L, interaction.chebuseries, interaction.r_z0, interaction.chebcoefs0, interaction.grids0)
 
     return (E_k + E_0) / (4π * interaction.ϵ)
 end
@@ -23,7 +20,7 @@ function energy_long(interaction::FSSoGThinInteraction{T}) where{T}
 
     E_k = energy_long_thin_k(interaction.charge, interaction.position, interaction.L, interaction.r_z, interaction.H_r, interaction.H_c, interaction.gridinfo, interaction.pad_grids, interaction.scalefactors, interaction.cheb_coefs, interaction.cheb_value)
 
-    E_0 = energy_long_0(interaction.charge, interaction.position, interaction.L, 0, interaction.uspara, interaction.r_z0, interaction.chebcoefs0, interaction.grids0)
+    E_0 = energy_long_0(interaction.charge, interaction.position, interaction.L, interaction.chebuseries, interaction.r_z0, interaction.chebcoefs0, interaction.grids0)
     return (E_k + E_0) / (4π * interaction.ϵ)
 end
 

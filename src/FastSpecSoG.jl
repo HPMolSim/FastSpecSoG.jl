@@ -1,11 +1,11 @@
 module FastSpecSoG
 
-using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, SumOfExpVPMR, LoopVectorization, OMEinsum, FastChebInterp, Polynomials, FFTW, DoubleFloats
+using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, FastChebInterp, Polynomials, FFTW, DoubleFloats
 using Base.Threads
 
 import FastChebInterp: ChebPoly
 
-export USeriesPara, U_series, BSA, ChebUSeries, proper_M
+export USeriesPara, U_series, BSA, ChebUSeries, ChebUSeries_0, proper_M
 export FSSoG_naive, FSSoGInteraction, FSSoGThinInteraction
 export short_energy_naive, long_energy_naive, energy_naive
 

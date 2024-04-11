@@ -57,6 +57,7 @@ mutable struct FSSoGInteraction{T} <: ExTinyMD.AbstractInteraction
     r_z0::Vector{T}
     chebcoefs0::Vector{T}
     grids0::Vector{T}
+    chebuseries::ChebPoly{1, T, T}
 end
 
 mutable struct FSSoGThinInteraction{T} <: ExTinyMD.AbstractInteraction
@@ -93,4 +94,5 @@ mutable struct FSSoGThinInteraction{T} <: ExTinyMD.AbstractInteraction
     r_z0::Vector{T}
     chebcoefs0::Vector{T}
     grids0::Vector{T}
+    chebuseries::ChebPoly{1, T, T}
 end

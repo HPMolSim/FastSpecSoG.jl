@@ -1,3 +1,22 @@
+function USeries_direct_0(z::T, L_z::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
+    t = zero(T)
+
+    for l in M_mid + 1:length(uspara.sw)
+        sl, wl = uspara.sw[l]
+        N = proper_N(1e-16, (L_z / sl)^2)
+        
+        if N == 0
+            t += π * wl * sl^2 * exp(-z^2 / sl^2)
+        else
+            for k in 1:N
+                t += π * wl * sl^2 * special_powern(- z^2 / sl^2, k)
+            end
+        end
+    end
+
+    return t
+end
+
 function USeries_direct(z::T, k_xi::T, k_yj::T, uspara::USeriesPara{T}, M_mid::Int) where{T}
     t = zero(T)
     k2 = k_xi^2 + k_yj^2
@@ -8,6 +27,14 @@ function USeries_direct(z::T, k_xi::T, k_yj::T, uspara::USeriesPara{T}, M_mid::I
     end
 
     return t
+end
+
+function ChebUSeries_0(L_z::T, uspara::USeriesPara{T}, M::Int, Q::Int) where{T}
+
+    f = z -> USeries_direct_0(z, L_z, uspara, M)
+    x = chebpoints(Q, zero(T), L_z)
+
+    return chebinterp(f.(x), zero(T), L_z)
 end
 
 function ChebUSeries_k(k_xi::T, k_yj::T, L_z::T, uspara::USeriesPara{T}, M::Int, Q::Int) where{T}
