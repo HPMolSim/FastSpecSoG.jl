@@ -83,10 +83,10 @@ end
         pwcheb_eval!(dx, cheb_value[i], cheb_coefs[i])
     end
 
-    for i in gridinfo.iter_list
-        image_id = near_id_image.id .+ i
-        for k in 1:size(pad_grid, 3)
-            qn = q * ((pos[3] - r_z[k]) / L_z)^(2 * (Taylor_order - 1))
+    for k in 1:size(pad_grid, 3)
+        qn = q * ((pos[3] - r_z[k]) / L_z)^(2 * (Taylor_order - 1))
+        for i in gridinfo.iter_list
+            image_id = near_id_image.id .+ i
             pad_grid[idl[1][image_id[1]], idl[2][image_id[2]], k] += Complex{T}(qn * prod(cheb_value[j][i[j] + gridinfo.w[j] + 1] for j in 1:2))
         end
     end
