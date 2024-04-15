@@ -11,12 +11,12 @@ function BSA(x::T, b::T, σ::T, M::Int) where{T}
 end
 
 const preset_parameters = [
-    tuple(2.0, 5.027010924194599, 0.994446492762232252, 18), 
-    tuple(1.62976708826776469, 3.633717409009413, 1.00780697934380681, 39), 
-    tuple(1.48783512395703226, 2.662784519725113, 0.991911705759818, 45), 
-    tuple(1.32070036405934420, 2.277149356440992, 1.00188914114811980, 78),
-    tuple(1.21812525709410644, 1.774456369233284, 1.00090146156033341, 144),
-    tuple(1.14878150173321925, 1.370684570284264 , 1.000036834835822, 233)]
+    tuple(2.0, 0.5027010924194599, 0.994446492762232252, 18), 
+    tuple(1.62976708826776469, 0.3633717409009413, 1.00780697934380681, 39), 
+    tuple(1.48783512395703226, 0.2662784519725113, 0.991911705759818, 45), 
+    tuple(1.32070036405934420, 0.2277149356440992, 1.00188914114811980, 78),
+    tuple(1.21812525709410644, 0.1774456369233284, 1.00090146156033341, 144),
+    tuple(1.14878150173321925, 0.1370684570284264 , 1.000036834835822, 233)]
 
 function U_series(x::T, b::T, σ::T, M::Int) where{T}
     U_series_value = zero(T)
@@ -41,10 +41,10 @@ function USeriesPara(b::T, σ::T, ω::T, M::Int) where{T}
     return USeriesPara(sw)
 end
 
-function USeriesPara(preset::Int, T::DataType = Float64)
+function USeriesPara(preset::Int; r_c::T = 10.0) where{T}
     @assert preset ≤ length(preset_parameters)
 
-    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]), T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
+    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]) * r_c, T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
 
     return USeriesPara(b, σ, ω, M)
 end

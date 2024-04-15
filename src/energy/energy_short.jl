@@ -18,7 +18,7 @@ function Es_USeries_Cheb(uspara::USeriesPara{T}, r_min::T, r_max::T, Q::Int) whe
 end
 
 function Es_Cheb_precompute(preset::Int, r_min::T, r_max::T, Q::Int) where{T}
-    uspara = USeriesPara(preset, T)
+    uspara = USeriesPara(preset, r_c = r_max)
     uspara_cheb = Es_USeries_Cheb(uspara, r_min, r_max, Q)
     F0 = F0_cal(preset = preset, T = T)
     return uspara_cheb, F0

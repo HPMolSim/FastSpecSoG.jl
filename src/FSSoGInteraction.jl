@@ -31,7 +31,7 @@ function FSSoG_naive(L::NTuple{3, T}, n_atoms::Int, r_c::T, k_c::T; preset::Int 
 
     @assert preset ≤ length(preset_parameters)
     
-    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]), T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
+    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]) * r_c, T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
     uspara = USeriesPara(b, σ, ω, M)
     k_set = k_set_2D(k_c, L)
     return FSSoG_naive{T}(b, σ, ω, M, r_c, k_c, ϵ, L, k_set, uspara, n_atoms)
@@ -78,7 +78,7 @@ function FSSoGInteraction(
 
     @assert preset ≤ length(preset_parameters)
     
-    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]), T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
+    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]) * r_c, T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
     
     return FSSoGInteraction(b, σ, ω, M, L, n_atoms, r_c, Q_short, r_min, N_real_mid, w, β, extra_pad_ratio, cheb_order, M_mid, N_grid_long, Q_long, Rz_0, Q_0, ϵ = ϵ)
 end
@@ -117,7 +117,7 @@ function FSSoGThinInteraction(
 
     @assert preset ≤ length(preset_parameters)
     
-    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]), T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
+    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]) * r_c, T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
     
     return FSSoGThinInteraction(b, σ, ω, M, L, n_atoms, r_c, Q_short, r_min, N_real, R_z, w, β, cheb_order, Taylor_Q, Rz_0, Q_0, ϵ = ϵ)
 end

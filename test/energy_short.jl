@@ -37,7 +37,6 @@ end
 
     for preset in 1:5
         @testset "preset = $preset" begin
-            uspara = USeriesPara(preset)
             r_min = 0.5
             r_max = 10.0
             Q = 64
