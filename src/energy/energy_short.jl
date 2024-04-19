@@ -2,10 +2,10 @@ function F0_cal(b::T, σ::T, ω::T, M::Int) where{T}
     return - log(b) / sqrt(2π) / σ * (ω + (one(T) - b^(-M)) / (b - one(T)))
 end
 
-function F0_cal(;preset::Int = 1, T::DataType = Float64)
+function F0_cal(;preset::Int = 1, r_c::T = 10.0) where{T}
     @assert preset ≤ length(preset_parameters)
 
-    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]), T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
+    b, σ, ω, M = T(preset_parameters[preset][1]), T(preset_parameters[preset][2]) * r_c, T(preset_parameters[preset][3]), Int(preset_parameters[preset][4])
 
     return F0_cal(b, σ, ω, M)
 end
@@ -18,9 +18,9 @@ function Es_USeries_Cheb(uspara::USeriesPara{T}, r_min::T, r_max::T, Q::Int) whe
 end
 
 function Es_Cheb_precompute(preset::Int, r_min::T, r_max::T, Q::Int) where{T}
-    uspara = USeriesPara(preset, T)
+    uspara = USeriesPara(preset, r_c = r_max)
     uspara_cheb = Es_USeries_Cheb(uspara, r_min, r_max, Q)
-    F0 = F0_cal(preset = preset, T = T)
+    F0 = F0_cal(preset = preset, r_c = r_max)
     return uspara_cheb, F0
 end
 

@@ -2,6 +2,8 @@ struct USeriesPara{T}
     sw::Vector{NTuple{2, T}}
 end
 
+Base.show(io::IO, uspara::USeriesPara{T}) where{T} = print(io, "USeriesPara($T), M=$(length(uspara.sw))")
+
 struct FSSoG_naive{T} <: ExTinyMD.AbstractInteraction
     b::T
     σ::T
