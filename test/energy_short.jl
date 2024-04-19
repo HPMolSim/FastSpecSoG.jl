@@ -37,16 +37,18 @@ end
 
     for preset in 1:5
         @testset "preset = $preset" begin
-            r_min = 0.5
-            r_max = 10.0
-            Q = 64
-            uspara_cheb, F0 = Es_Cheb_precompute(preset, r_min, r_max, Q)
-            interaction = FSSoG_naive((L, L, L), n_atoms, r_max, 3.0, preset = preset)
-            neighbor = CellList3D(info, interaction.r_c, boundary, 1)
+            for r_c in range(1.0, 1.0, 10)
+                r_min = 0.5
+                r_max = r_c
+                Q = 64
+                uspara_cheb, F0 = Es_Cheb_precompute(preset, r_min, r_max, Q)
+                interaction = FSSoG_naive((L, L, L), n_atoms, r_max, 3.0, preset = preset)
+                neighbor = CellList3D(info, interaction.r_c, boundary, 1)
 
-            Es_naive = short_energy_naive(interaction, neighbor, position, charge)
-            Es_Cheb = short_energy_Cheb(uspara_cheb, interaction.r_c, F0, boundary, neighbor, position, charge)
-            @test isapprox(Es_naive, Es_Cheb; atol = 1e-12)
+                Es_naive = short_energy_naive(interaction, neighbor, position, charge)
+                Es_Cheb = short_energy_Cheb(uspara_cheb, interaction.r_c, F0, boundary, neighbor, position, charge)
+                @test isapprox(Es_naive, Es_Cheb; atol = 1e-12)
+            end
         end
     end
 end
