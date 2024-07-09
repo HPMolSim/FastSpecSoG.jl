@@ -67,7 +67,7 @@ end
 
     @info "testing the long range part of the thin system, loop and cheb"
     n_atoms = 32
-    L = (100.0, 100.0, 0.5)
+    L = (100.0, 100.0, 0.1)
 
     qs = rand(n_atoms)
     qs .-= sum(qs) ./ n_atoms
@@ -75,7 +75,7 @@ end
 
     N_grid = (32, 32, 64)
     uspara = USeriesPara(1)
-    M_mid = 0
+    M_mid = 3
 
     k_x, k_y, r_z, H_r, H_c, phase_x, phase_y = long_paras_gen(L, N_grid)
     cheb_mat = ChebUSeries(k_x, k_y, L[3], uspara, M_mid, 64)
@@ -84,8 +84,12 @@ end
     E_long_cheb_k = energy_long_cheb_k(qs, poses, L, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, cheb_mat)
 
     E_direct_k = long_energy_us_k(qs, poses, 10^(-16), L, uspara, M_mid + 1, length(uspara.sw))
+
+    slab_nufft = SlabNUFFT(n_atoms, (64, 64), 8, L, 1e-15, uspara, M_mid)
+    E_nufft_slab = nufft_energy_long_k(qs, poses, slab_nufft)
     
     @test isapprox(E_long_loop_k, E_long_cheb_k)
+    @test isapprox(E_nufft_slab, E_direct_k)
     @test isapprox(E_long_loop_k, E_direct_k, atol=1e-8)
     @test isapprox(E_long_cheb_k, E_direct_k, atol=1e-8)
 end

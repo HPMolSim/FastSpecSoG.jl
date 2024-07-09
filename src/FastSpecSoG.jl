@@ -46,4 +46,7 @@ include("energy/energy.jl")
 include("energy/energy_short_naive.jl")
 include("energy/energy_long_naive.jl")
 
+include("NUFFT/cube_nufft.jl")
+include("NUFFT/slab_nufft.jl")
+
 end

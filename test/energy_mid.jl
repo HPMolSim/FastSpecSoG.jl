@@ -23,7 +23,12 @@
 
     @info "running the direct summation for the middle range part of the energy"
     # using the direct summation
-    E_direct = long_energy_us_k(qs, poses, 30, L, uspara, 1, M_mid) + long_energy_us_0(qs, poses, L, uspara, 1, M_mid)
+    E_direct = long_energy_us_k(qs, poses, 100, L, uspara, 1, M_mid) + long_energy_us_0(qs, poses, L, uspara, 1, M_mid)
+
+    @info "nufft version for middle range part of energy"
+    cube_nufft = CubeNUFFT(n_atoms, (128, 128, 128), L, 1.5, 1e-15, uspara, M_mid)
+    E_nufft = nufft_energy_mid(qs, poses, cube_nufft)
 
     @test isapprox(E_3DFFT, E_direct, atol=1e-4)
+    @test isapprox(E_direct, E_nufft)
 end
