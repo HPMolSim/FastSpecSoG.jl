@@ -9,7 +9,7 @@
 
     # using the 3DFFT
     N_real = (32, 32, 32)
-    w = Int.(N_real ./ 4)
+    w = (8, 8, 8)
     β = 5.0 .* w
     extra_pad_ratio = 2
     cheb_order = 10
