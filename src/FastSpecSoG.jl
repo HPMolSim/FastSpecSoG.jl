@@ -49,4 +49,7 @@ include("energy/energy_long_naive.jl")
 include("NUFFT/cube_nufft.jl")
 include("NUFFT/slab_nufft.jl")
 
+include("Q1D/tube_naive.jl")
+include("Q1D/tube_nufft.jl")
+
 end
