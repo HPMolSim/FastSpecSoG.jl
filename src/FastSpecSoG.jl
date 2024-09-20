@@ -25,7 +25,12 @@ export thin_paras_gen, interpolate_thin!, gather_thin, scale_thin!
 export piecewise_fft!, piecewise_ifft!, piecewise_mul!
 export energy_long_thin_k
 
+export energy_per_atom
+
+export rmsd, rrmsd
+
 include("types.jl")
+include("utils.jl")
 
 include("U_series.jl")
 include("FSSoGInteraction.jl")

@@ -21,6 +21,12 @@
     Ewald2D_neighbor = CellList3D(info, Ewald2D_interaction.r_c, boundary, 1)
     energy_ewald = energy(Ewald2D_interaction, Ewald2D_neighbor, info, atoms)
 
+    p = [info.particle_info[i].position for i in 1:n_atoms]
+    q = [atoms[info.particle_info[i].id].charge for i in 1:n_atoms]
+    energy_ewald_s = Ewald2D_short_energy_N(10, Ewald2D_interaction, p, q)
+    energy_ewald_l = Ewald2D_long_energy_N(10, Ewald2D_interaction, p, q)
+    energy_ewald_per_atom = energy_ewald_s + energy_ewald_l
+
     for r_c in [10.0, 15.0]
         fssog_naive = FSSoG_naive((L, L, L), n_atoms, r_c, 4.0, preset = 3)
         fssog_neighbor = CellList3D(info, fssog_naive.r_c, boundary, 1)
@@ -47,6 +53,12 @@
         @test abs(energy_ewald - energy_sog_naive) < 1e-4
         @test abs(energy_ewald - energy_sog) < 1e-4
         @test abs(energy_sog_naive - energy_sog) < 1e-6
+        
+        energy_sog_per_atom = energy_per_atom(fssog_interaction, fssog_neighbor, info, atoms)
+
+        for i in 1:10
+            @test abs(energy_sog_per_atom[i] - energy_ewald_per_atom[i]) < 1e-4
+        end
     end
 end
 
@@ -75,6 +87,12 @@ end
     Ewald2D_neighbor = CellList3D(info, Ewald2D_interaction.r_c, boundary, 1)
     energy_ewald = energy(Ewald2D_interaction, Ewald2D_neighbor, info, atoms)
 
+    p = [info.particle_info[i].position for i in 1:n_atoms]
+    q = [atoms[info.particle_info[i].id].charge for i in 1:n_atoms]
+    energy_ewald_s = Ewald2D_short_energy_N(10, Ewald2D_interaction, p, q)
+    energy_ewald_l = Ewald2D_long_energy_N(10, Ewald2D_interaction, p, q)
+    energy_ewald_per_atom = energy_ewald_s + energy_ewald_l
+
     for r_c in [10.0, 15.0]
         N_real = (128, 128)
         R_z = 32
@@ -99,5 +117,10 @@ end
         @test abs(energy_ewald - energy_sog) < 1e-3
         @test abs(energy_ewald - energy_sog_naive) < 1e-3
         @test abs(energy_sog - energy_sog_naive) < 1e-6
+
+        energy_sog_per_atom = energy_per_atom(fssog_interaction, fssog_neighbor, info, atoms)
+        for i in 1:10
+            @test abs(energy_sog_per_atom[i] - energy_ewald_per_atom[i]) < 1e-4
+        end
     end
 end

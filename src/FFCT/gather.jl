@@ -42,7 +42,7 @@ end
         end
     end
 
-    return q * prod(gridinfo.h) * potential_i
+    return q * prod(gridinfo.h) * potential_i / 2
 end
 
 function gather_thin(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}, H_c::Array{Complex{T}, 3}, gridinfo::GridInfo{2, T}, cheb_value::Vector{Array{T, 1}}, cheb_coefs::NTuple{2, ChebCoef{T}}) where{T}
@@ -50,5 +50,5 @@ function gather_thin(qs::Vector{T}, poses::Vector{NTuple{3, T}}, L::NTuple{3, T}
     for i in 1:length(qs)
         E += gather_thin_single(qs[i], poses[i], L[3], H_c, gridinfo, cheb_value, cheb_coefs)
     end
-    return real(E) / 2
+    return real(E)
 end

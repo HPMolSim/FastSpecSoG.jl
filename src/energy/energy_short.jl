@@ -56,10 +56,44 @@ function short_energy_Cheb(uspara_cheb::ChebPoly{1, T, T}, r_c::T, F0::T, bounda
     return energy_short / 4π
 end
 
+function short_energy_Cheb_per_atom(uspara_cheb::ChebPoly{1, T, T}, r_c::T, F0::T, boundary::Boundary{T}, neighbor::CellList3D{T}, position::Vector{NTuple{3, T}}, q::Vector{T}) where{T}
+
+    neighbor_list = neighbor.neighbor_list
+
+    energy_short_per_atoms = zeros(T, length(q))
+
+    for (i, j, ρ) in neighbor_list
+        coord_1, coord_2, r_sq = position_check3D(position[i], position[j], boundary, r_c)
+        if iszero(r_sq)
+            nothing
+        else
+            q_1 = q[i]
+            q_2 = q[j]
+            t = Es_Cheb_pair(q_1, q_2, uspara_cheb, sqrt(r_sq))
+            energy_short_per_atoms[i] += t / 2
+            energy_short_per_atoms[j] += t / 2
+        end
+    end
+
+    for i in 1:length(q)
+        energy_short_per_atoms[i] += q[i]^2 * F0
+    end
+
+    return energy_short_per_atoms ./ 4π
+end
+
 function energy_short(interaction::FSSoGInteraction{T}, neighbor::CellList3D{T}) where{T}
     return short_energy_Cheb(interaction.uspara_cheb, interaction.r_c, interaction.F0, interaction.boundary, neighbor, interaction.position, interaction.charge) / interaction.ϵ
 end
 
+function energy_short_per_atom(interaction::FSSoGInteraction{T}, neighbor::CellList3D{T}) where{T}
+    return short_energy_Cheb_per_atom(interaction.uspara_cheb, interaction.r_c, interaction.F0, interaction.boundary, neighbor, interaction.position, interaction.charge) ./ interaction.ϵ
+end
+
 function energy_short(interaction::FSSoGThinInteraction{T}, neighbor::CellList3D{T}) where{T}
     return short_energy_Cheb(interaction.uspara_cheb, interaction.r_c, interaction.F0, interaction.boundary, neighbor, interaction.position, interaction.charge) / interaction.ϵ
+end
+
+function energy_short_per_atom(interaction::FSSoGThinInteraction{T}, neighbor::CellList3D{T}) where{T}
+    return short_energy_Cheb_per_atom(interaction.uspara_cheb, interaction.r_c, interaction.F0, interaction.boundary, neighbor, interaction.position, interaction.charge) ./ interaction.ϵ
 end

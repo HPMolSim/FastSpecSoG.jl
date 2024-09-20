@@ -57,6 +57,26 @@ function energy_mid(qs::Vector{T}, poses::Vector{NTuple{3, T}}, gridinfo::GridIn
     return E
 end
 
+function energy_mid_per_atom(qs::Vector{T}, poses::Vector{NTuple{3, T}}, gridinfo::GridInfo{3, T}, gridbox::GridBox{3, T}, cheb_coefs::NTuple{3, ChebCoef{T}}, scalefactor::ScalingFactor{3, T}) where{T}
+
+    energy_mid_per_atom = zeros(T, length(qs))
+
+    interpolate!(qs, poses, gridinfo, gridbox, cheb_coefs)
+    fft!(gridbox)
+    scale!(gridbox, scalefactor)
+    ifft!(gridbox)
+
+    for i in 1:length(qs)
+        energy_mid_per_atom[i] = gather_single(qs[i], poses[i], gridinfo, gridbox, cheb_coefs) / 2
+    end
+
+    return energy_mid_per_atom
+end
+
 function energy_mid(interaction::FSSoGInteraction{T}) where{T}
     return energy_mid(interaction.charge, interaction.position, interaction.gridinfo, interaction.gridbox, interaction.cheb_coefs, interaction.scalefactor) / (4π * interaction.ϵ)
+end
+
+function energy_mid_per_atom(interaction::FSSoGInteraction{T}) where{T}
+    return energy_mid_per_atom(interaction.charge, interaction.position, interaction.gridinfo, interaction.gridbox, interaction.cheb_coefs, interaction.scalefactor) ./ (4π * interaction.ϵ)
 end
