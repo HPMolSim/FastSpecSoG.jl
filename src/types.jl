@@ -18,6 +18,8 @@ struct FSSoG_naive{T} <: ExTinyMD.AbstractInteraction
     n_atoms::Int
 end
 
+Base.show(io::IO, fssog_naive::FSSoG_naive{T}) where{T} = print(io, "FSSoG_naive($T), b=$(fssog_naive.b), σ=$(fssog_naive.σ), ω=$(fssog_naive.ω), M=$(fssog_naive.M), r_c=$(fssog_naive.r_c), k_c=$(fssog_naive.k_c), ϵ=$(fssog_naive.ϵ), L=$(fssog_naive.L), n_atoms=$(fssog_naive.n_atoms)")
+
 mutable struct FSSoGInteraction{T} <: ExTinyMD.AbstractInteraction
     b::T
     σ::T
@@ -62,6 +64,8 @@ mutable struct FSSoGInteraction{T} <: ExTinyMD.AbstractInteraction
     chebuseries::ChebPoly{1, T, T}
 end
 
+Base.show(io::IO, fssog::FSSoGInteraction{T}) where{T} = print(io, "FSSoGInteraction($T), b=$(fssog.b), σ=$(fssog.σ), ω=$(fssog.ω), M=$(fssog.M), M_mid=$(fssog.M_mid), ϵ=$(fssog.ϵ), L=$(fssog.L), r_c=$(fssog.r_c), Q_0=$(fssog.Q_0), N_grid_mid=$(fssog.gridinfo.N_pad), N_grid_long=$(size(fssog.H_r))")
+
 mutable struct FSSoGThinInteraction{T} <: ExTinyMD.AbstractInteraction
     b::T
     σ::T
@@ -98,3 +102,5 @@ mutable struct FSSoGThinInteraction{T} <: ExTinyMD.AbstractInteraction
     grids0::Vector{T}
     chebuseries::ChebPoly{1, T, T}
 end
+
+Base.show(io::IO, fssog_thin::FSSoGThinInteraction{T}) where{T} = print(io, "FSSoGThinInteraction($T), b=$(fssog_thin.b), σ=$(fssog_thin.σ), ω=$(fssog_thin.ω), M=$(fssog_thin.M), ϵ=$(fssog_thin.ϵ), L=$(fssog_thin.L), r_c=$(fssog_thin.r_c), Q_0=$(fssog_thin.Q_0), N_grid=$(size(fssog_thin.H_r))")
