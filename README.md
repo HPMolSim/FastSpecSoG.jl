@@ -6,6 +6,7 @@
 
 `FastSpecSoG.jl` is an implementation of the newly developed fast spectral sum-of-Gaussian method for the calculation of the electrostatic potential and field in double periodic molecular systems in Julia Programming Language. 
 The method is based on the sum-of-Gaussian (SoG) approximation, the Non-Uniform Fast Fourier Transform (NUFFT) algorithm and the FFT-FFCT mixed algorithm and reached a complexity of $O(N \log N)$ with spectral accuracy.
+For more details about our method, please refer to our arxiv article [A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems](https://arxiv.org/abs/2412.04595).
 
 ## Getting Started
 
@@ -96,4 +97,16 @@ fssog_interaction = FSSoGThinInteraction((Lx, Ly, Lz), n_atoms, r_c, Q, 0.5, N_r
 
 fssog_neighbor = CellList3D(info, fssog_interaction.r_c, fssog_interaction.boundary, 1)
 energy_sog = ExTinyMD.energy(fssog_interaction, fssog_neighbor, info, atoms)
+```
+
+## Citation
+
+If you use this package in your research, please cite our article:
+```
+@article{fssog,
+      title={{A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems}}, 
+      author={Xuanzhao Gao and Shidong Jiang and Jiuyang Liang and Zhenli Xu and Qi Zhou},
+      year={2024},
+      journal={arXiv preprint arXiv:2412.04595},
+}
 ```
