@@ -1,6 +1,7 @@
 using FastSpecSoG
 using Test
-using ExTinyMD, EwaldSummations, TaylorSeries, FFTW, Polynomials, DoubleFloats
+using ExTinyMD, EwaldSummations, TaylorSeries, FFTW, Polynomials
+using DoubleFloats
 using Random
 Random.seed!(1234)
 
