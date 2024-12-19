@@ -6,7 +6,9 @@
 
 `FastSpecSoG.jl` is an implementation of the newly developed fast spectral sum-of-Gaussian method for the calculation of the electrostatic potential and field in double periodic molecular systems in Julia Programming Language. 
 The method is based on the sum-of-Gaussian (SoG) approximation, the Non-Uniform Fast Fourier Transform (NUFFT) algorithm and the FFT-FFCT mixed algorithm and reached a complexity of $O(N \log N)$ with spectral accuracy.
+
 For more details about our method, please refer to our arxiv article [A fast spectral sum-of-Gaussians method for electrostatic summation in quasi-2D systems](https://arxiv.org/abs/2412.04595).
+For benchmarks, please see this repo https://github.com/ArrogantGao/FSSoG_benchmark.
 
 ## Getting Started
 
