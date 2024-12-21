@@ -18,7 +18,7 @@ pkg> add ExTinyMD
 ```
 Then you can add this package by typing
 ```julia
-pkg> add https://github.com/HPMolSim/FastSpecSoG.jl
+pkg> add FastSpecSoG
 ```
 to install the package.
 
