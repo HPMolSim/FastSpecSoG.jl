@@ -1,19 +1,35 @@
-function short_energy_naive(interaction::FSSoG_naive{T}, neighbor::CellList3D{T}, position::Vector{NTuple{3, T}}, q::Vector{T}) where{T}
-    neighbor_list = neighbor.neighbor_list
-
+# Kept as its own function so that each candidate-iterator type specializes.
+function _short_naive_sum(pairs, interaction::FSSoG_naive{T}, position, q::Vector{T}) where{T}
+    r_c_sq = interaction.r_c^2
     energy_short = zero(T)
-    boundary = Q2dBoundary(interaction.L[1], interaction.L[2], interaction.L[3])
 
-    for (i, j, ρ) in neighbor_list
-        coord_1, coord_2, r_sq = position_check3D(position[i], position[j], boundary, interaction.r_c)
-        if iszero(r_sq)
-            nothing
-        else
-            q_1 = q[i]
-            q_2 = q[j]
-            energy_short += Es_naive_pair(q_1, q_2, interaction.uspara, r_sq)
-        end
+    for pair in pairs
+        i, j = pair[1], pair[2]
+        _, _, r_sq = _min_image_slab(position[i], position[j], interaction.L)
+        # See `_short_Cheb_sum`: the cutoff test and the coincident-pair test
+        # were previously conflated in `position_check3D`'s all-zero sentinel.
+        # `Es_naive_pair` computes 1/sqrt(r_sq), so r_sq == 0 must be skipped.
+        (r_sq < r_c_sq && !iszero(r_sq)) || continue
+        energy_short += Es_naive_pair(q[i], q[j], interaction.uspara, r_sq)
     end
+
+    return energy_short
+end
+
+"""
+    short_energy_naive(interaction, position, q; neighbor_list = nothing)
+
+Direct (unapproximated) short-range energy, the reference the Chebyshev form in
+[`short_energy_Cheb`](@ref) is validated against. `position` is
+array-of-structs and only indexed.
+
+**`interaction.r_c` must be strictly less than `min(Lx, Ly) / 2`.**
+`neighbor_list` is an optional iterable of candidate pairs; omitting it falls
+back to all i < j pairs.
+"""
+function short_energy_naive(interaction::FSSoG_naive{T}, position, q::Vector{T}; neighbor_list = nothing) where{T}
+
+    energy_short = _short_naive_sum(_candidate_pairs(_pair_list(neighbor_list), length(q)), interaction, position, q)
 
     energy_short += Es_naive_self(q, interaction)
 

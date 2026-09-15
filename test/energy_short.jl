@@ -37,6 +37,8 @@ end
 
     for preset in 1:5
         @testset "preset = $preset" begin
+            # r_c = 1.0 < min(Lx, Ly)/2 = 50.0, as the minimum-image
+            # convention in `_min_image_slab` requires.
             for r_c in range(1.0, 1.0, 10)
                 r_min = 0.5
                 r_max = r_c
@@ -45,9 +47,24 @@ end
                 interaction = FSSoG_naive((L, L, L), n_atoms, r_max, 3.0, preset = preset)
                 neighbor = CellList3D(info, interaction.r_c, boundary, 1)
 
-                Es_naive = short_energy_naive(interaction, neighbor, position, charge)
-                Es_Cheb = short_energy_Cheb(uspara_cheb, interaction.r_c, F0, boundary, neighbor, position, charge)
+                # `neighbor` is an ExTinyMD CellList3D: passing the finder
+                # itself (rather than reaching inside for .neighbor_list)
+                # exercises the duck-typed `_pair_list` accessor, and the pair
+                # list it carries is only ever treated as CANDIDATES -- the
+                # true 3-D separation is recomputed from `position`.
+                Es_naive = short_energy_naive(interaction, position, charge; neighbor_list = neighbor)
+                Es_Cheb = short_energy_Cheb(uspara_cheb, interaction.r_c, F0, (L, L, L), position, charge; neighbor_list = neighbor)
                 @test isapprox(Es_naive, Es_Cheb; atol = 1e-12)
+
+                # ... and the same answer with no neighbour list at all, which
+                # takes the all-pairs fallback. Equality here is not
+                # approximate agreement between two methods but the same sum
+                # over the same pair set in a different order, so it is held to
+                # round-off rather than to the 1e-12 above.
+                Es_naive_all = short_energy_naive(interaction, position, charge)
+                Es_Cheb_all = short_energy_Cheb(uspara_cheb, interaction.r_c, F0, (L, L, L), position, charge)
+                @test isapprox(Es_naive, Es_naive_all; rtol = 1e-14)
+                @test isapprox(Es_Cheb, Es_Cheb_all; rtol = 1e-14)
             end
         end
     end
