@@ -19,8 +19,13 @@
 #     cutoff. That bound is a documented requirement of this package, asserted
 #     at every test site.
 
-"Nearest-image displacement of `dx` under period `L`."
-@inline _wrap(dx::T, L::T) where {T} = dx - L * round(dx / L)
+"""
+    _image_shift(d, L) -> shift
+
+Whole number of periods to add to a coordinate whose signed separation from its
+partner is `d`, to bring it to its nearest image.
+"""
+@inline _image_shift(d::T, L::T) where {T} = -round(d / L) * L
 
 """
     _min_image_slab(pos_i, pos_j, L) -> (coord_i, coord_j, r_sq)
@@ -35,14 +40,30 @@ Inputs need only support `p[1]`/`p[2]`/`p[3]` indexing, so `NTuple{3,T}`,
 conversion layer. The two coordinates are returned as `NTuple{3,T}` to match
 this package's own convention and to avoid a StaticArrays dependency; they are
 only ever indexed. This package's short-range sums use `r_sq` alone.
+
+!!! warning "The operation order here is load-bearing -- do not simplify it"
+    `pos_i` is SHIFTED by a whole number of periods first, and the difference
+    is taken afterwards. The tempting shorter form -- wrap the difference, then
+    reconstruct the coordinate as `pos_j + dx` -- evaluates `(a - b) - L` where
+    this evaluates `(a - L) - b`, and those differ in the last bits. That is
+    not a cosmetic difference: it is the difference between reproducing
+    `position_check3D` bit-for-bit and drifting from it. Measured in Phase 3c
+    on SoEwald2D, the `pos_j + dx` form moved the short-range energy by up to
+    2.2e-16 relative and the short-range forces by up to 1.5e-14 relative.
 """
 @inline function _min_image_slab(pos_i, pos_j, L::NTuple{3, T}) where {T}
-    dx = _wrap(T(pos_i[1]) - T(pos_j[1]), L[1])
-    dy = _wrap(T(pos_i[2]) - T(pos_j[2]), L[2])
-    dz = T(pos_i[3]) - T(pos_j[3])
+    x_i = T(pos_i[1]); y_i = T(pos_i[2]); z_i = T(pos_i[3])
+    x_j = T(pos_j[1]); y_j = T(pos_j[2]); z_j = T(pos_j[3])
+
+    coord_i = (x_i + _image_shift(x_i - x_j, L[1]),
+               y_i + _image_shift(y_i - y_j, L[2]),
+               z_i)
+    coord_j = (x_j, y_j, z_j)
+
+    dx = coord_i[1] - coord_j[1]
+    dy = coord_i[2] - coord_j[2]
+    dz = coord_i[3] - coord_j[3]
     r_sq = dx^2 + dy^2 + dz^2
-    coord_i = (T(pos_j[1]) + dx, T(pos_j[2]) + dy, T(pos_i[3]))
-    coord_j = (T(pos_j[1]), T(pos_j[2]), T(pos_j[3]))
     return coord_i, coord_j, r_sq
 end
 
