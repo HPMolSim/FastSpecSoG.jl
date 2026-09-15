@@ -1,6 +1,6 @@
 module FastSpecSoG
 
-using ExTinyMD, LinearAlgebra, SpecialFunctions, ChebParticleMesh, FastChebInterp, Polynomials, FFTW, DoubleFloats
+using LinearAlgebra, SpecialFunctions, ChebParticleMesh, FastChebInterp, Polynomials, FFTW, DoubleFloats
 using Base.Threads
 
 import FastChebInterp: ChebPoly
@@ -26,6 +26,11 @@ export piecewise_fft!, piecewise_ifft!, piecewise_mul!
 export energy_long_thin_k
 
 export energy_per_atom
+
+# `energy` is DEFINED but deliberately NOT exported (see src/energy/energy.jl):
+# several sibling electrostatics packages define a function of the same name,
+# so exporting it would make the bare name ambiguous under
+# `using FastSpecSoG, ...`. Call it as `FastSpecSoG.energy(plan, poses, charges)`.
 
 export rmsd, rrmsd
 

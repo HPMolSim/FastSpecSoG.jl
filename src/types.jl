@@ -1,10 +1,79 @@
+# ---------------------------------------------------------------------------
+# Slab-geometry minimum image
+# ---------------------------------------------------------------------------
+#
+# This replaces the `position_check3D(pos_i, pos_j, Q2dBoundary(L...), r_c)`
+# calls the short-range sums used to make. That function searched the periodic
+# images of `pos_i` under a boundary whose periods are `(1, 1, 0)`, i.e. x and
+# y only, and returned the FULL three-dimensional squared distance of the first
+# image inside the cutoff (or an all-zero sentinel if none was). The helpers
+# below reproduce that behaviour without any MD-framework type.
+#
+# Two properties matter and are relied on by every caller:
+#
+#   * the distance is three-dimensional. The short-range sum is a function of
+#     the true separation r and its cutoff test is on r, so an in-plane-only
+#     distance is wrong, not merely approximate.
+#   * "first image inside the cutoff" equals "minimum image" only while
+#     `r_c < min(Lx, Ly) / 2`, because then at most one image can be inside the
+#     cutoff. That bound is a documented requirement of this package, asserted
+#     at every test site.
+
+"""
+    _image_shift(d, L) -> shift
+
+Whole number of periods to add to a coordinate whose signed separation from its
+partner is `d`, to bring it to its nearest image.
+"""
+@inline _image_shift(d::T, L::T) where {T} = -round(d / L) * L
+
+"""
+    _min_image_slab(pos_i, pos_j, L) -> (coord_i, coord_j, r_sq)
+
+Slab-geometry nearest image: `x`/`y` wrap under `L[1]`/`L[2]`, `z` is a plain
+difference (the slab axis is not periodic). Returns `pos_i` shifted to its
+nearest in-plane image of `pos_j`, `pos_j` unchanged, and the **full
+three-dimensional** squared distance.
+
+Inputs need only support `p[1]`/`p[2]`/`p[3]` indexing, so `NTuple{3,T}`,
+`SVector{3,T}` and an MD framework's own point type all work with no
+conversion layer. The two coordinates are returned as `NTuple{3,T}` to match
+this package's own convention and to avoid a StaticArrays dependency; they are
+only ever indexed. This package's short-range sums use `r_sq` alone.
+
+!!! warning "The operation order here is load-bearing -- do not simplify it"
+    `pos_i` is SHIFTED by a whole number of periods first, and the difference
+    is taken afterwards. The tempting shorter form -- wrap the difference, then
+    reconstruct the coordinate as `pos_j + dx` -- evaluates `(a - b) - L` where
+    this evaluates `(a - L) - b`, and those differ in the last bits. That is
+    not a cosmetic difference: it is the difference between reproducing
+    `position_check3D` bit-for-bit and drifting from it. Measured in Phase 3c
+    on SoEwald2D, the `pos_j + dx` form moved the short-range energy by up to
+    2.2e-16 relative and the short-range forces by up to 1.5e-14 relative.
+"""
+@inline function _min_image_slab(pos_i, pos_j, L::NTuple{3, T}) where {T}
+    x_i = T(pos_i[1]); y_i = T(pos_i[2]); z_i = T(pos_i[3])
+    x_j = T(pos_j[1]); y_j = T(pos_j[2]); z_j = T(pos_j[3])
+
+    coord_i = (x_i + _image_shift(x_i - x_j, L[1]),
+               y_i + _image_shift(y_i - y_j, L[2]),
+               z_i)
+    coord_j = (x_j, y_j, z_j)
+
+    dx = coord_i[1] - coord_j[1]
+    dy = coord_i[2] - coord_j[2]
+    dz = coord_i[3] - coord_j[3]
+    r_sq = dx^2 + dy^2 + dz^2
+    return coord_i, coord_j, r_sq
+end
+
 struct USeriesPara{T}
     sw::Vector{NTuple{2, T}}
 end
 
 Base.show(io::IO, uspara::USeriesPara{T}) where{T} = print(io, "USeriesPara($T), M=$(length(uspara.sw))")
 
-struct FSSoG_naive{T} <: ExTinyMD.AbstractInteraction
+struct FSSoG_naive{T}
     b::T
     σ::T
     ω::T
@@ -20,14 +89,13 @@ end
 
 Base.show(io::IO, fssog_naive::FSSoG_naive{T}) where{T} = print(io, "FSSoG_naive($T), b=$(fssog_naive.b), σ=$(fssog_naive.σ), ω=$(fssog_naive.ω), M=$(fssog_naive.M), r_c=$(fssog_naive.r_c), k_c=$(fssog_naive.k_c), ϵ=$(fssog_naive.ϵ), L=$(fssog_naive.L), n_atoms=$(fssog_naive.n_atoms)")
 
-mutable struct FSSoGInteraction{T} <: ExTinyMD.AbstractInteraction
+mutable struct FSSoGInteraction{T}
     b::T
     σ::T
     ω::T
     M::Int
     ϵ::T
     L::NTuple{3, T}
-    boundary::Boundary{T}
     n_atoms::Int
 
     uspara::USeriesPara{T}
@@ -66,14 +134,13 @@ end
 
 Base.show(io::IO, fssog::FSSoGInteraction{T}) where{T} = print(io, "FSSoGInteraction($T), b=$(fssog.b), σ=$(fssog.σ), ω=$(fssog.ω), M=$(fssog.M), M_mid=$(fssog.M_mid), ϵ=$(fssog.ϵ), L=$(fssog.L), r_c=$(fssog.r_c), Q_0=$(fssog.Q_0), N_grid_mid=$(fssog.gridinfo.N_pad), N_grid_long=$(size(fssog.H_r))")
 
-mutable struct FSSoGThinInteraction{T} <: ExTinyMD.AbstractInteraction
+mutable struct FSSoGThinInteraction{T}
     b::T
     σ::T
     ω::T
     M::Int
     ϵ::T
     L::NTuple{3, T}
-    boundary::Boundary{T}
     n_atoms::Int
 
     uspara::USeriesPara{T}

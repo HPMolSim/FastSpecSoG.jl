@@ -51,8 +51,6 @@ function FSSoGInteraction(
     position = [tuple(zeros(T, 3)...) for i in 1:n_atoms]
     charge = zeros(T, n_atoms)
 
-    boundary = Q2dBoundary(L...)
-
     uspara_cheb = Es_USeries_Cheb(uspara, r_min, r_c, Q_short)
     F0 = F0_cal(b, σ, ω, M)
 
@@ -65,7 +63,7 @@ function FSSoGInteraction(
     r_z0, grids0, chebcoefs0 = zero_paras_gen(L[3], Rz_0)
     chebuseries = ChebUSeries_0(L[3], uspara, M_mid, Q_0)
 
-    return FSSoGInteraction{T}(b, σ, ω, M, ϵ, L, boundary, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, gridinfo, gridbox, cheb_coefs, scalefactor, M_mid, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, cheb_mat, Q_0, r_z0, chebcoefs0, grids0, chebuseries)
+    return FSSoGInteraction{T}(b, σ, ω, M, ϵ, L, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, gridinfo, gridbox, cheb_coefs, scalefactor, M_mid, k_x, k_y, r_z, phase_x, phase_y, H_r, H_c, cheb_mat, Q_0, r_z0, chebcoefs0, grids0, chebuseries)
 end
 
 function FSSoGInteraction(
@@ -95,8 +93,6 @@ function FSSoGThinInteraction(
     position = [tuple(zeros(T, 3)...) for i in 1:n_atoms]
     charge = zeros(T, n_atoms)
 
-    boundary = Q2dBoundary(L...)
-
     uspara_cheb = Es_USeries_Cheb(uspara, r_min, r_c, Q_short)
     F0 = F0_cal(b, σ, ω, M)
 
@@ -105,7 +101,7 @@ function FSSoGThinInteraction(
     r_z0, grids0, chebcoefs0 = zero_paras_gen(L[3], Rz_0)
     chebuseries = ChebUSeries_0(L[3], uspara, 0, Q_0)
 
-    return FSSoGThinInteraction{T}(b, σ, ω, M, ϵ, L, boundary, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, r_z, H_r, H_c, gridinfo, pad_grids, scalefactors, cheb_coefs, cheb_value, Q_0, r_z0, chebcoefs0, grids0, chebuseries)
+    return FSSoGThinInteraction{T}(b, σ, ω, M, ϵ, L, n_atoms, uspara, position, charge, uspara_cheb, r_c, F0, r_z, H_r, H_c, gridinfo, pad_grids, scalefactors, cheb_coefs, cheb_value, Q_0, r_z0, chebcoefs0, grids0, chebuseries)
 end
 
 function FSSoGThinInteraction(

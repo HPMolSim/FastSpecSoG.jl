@@ -5,14 +5,15 @@ Compute the long-range energy using a naive approach.
 
 # Arguments
 - `interaction`: The FSSoG_naive object representing the interaction parameters.
-- `position`: A vector of 3D positions of the charges.
+- `position`: An array-of-structs vector of 3D positions; elements need only
+  support `p[1]`/`p[2]`/`p[3]` indexing.
 - `charge`: A vector of charges.
 
 # Returns
 The computed long-range energy.
 
 """
-function long_energy_naive(interaction::FSSoG_naive{T}, position::Vector{NTuple{3, T}}, charge::Vector{T}) where{T}
+function long_energy_naive(interaction::FSSoG_naive{T}, position, charge::Vector{T}) where{T}
     energy = zero(T)
     for K in interaction.k_set
         energy += long_energy_naive_k(K, interaction, position, charge)
@@ -20,19 +21,21 @@ function long_energy_naive(interaction::FSSoG_naive{T}, position::Vector{NTuple{
     return energy / (4π * interaction.ϵ)
 end
 
-function long_energy_naive_k(K::NTuple{3, T}, interaction::FSSoG_naive{T}, position::Vector{NTuple{3, T}}, charge::Vector{T}) where{T}
+function long_energy_naive_k(K::NTuple{3, T}, interaction::FSSoG_naive{T}, position, charge::Vector{T}) where{T}
 
     energy_k = zero(T)
 
     kx, ky, k = K
     for i in 1:interaction.n_atoms
         qi = charge[i]
-        xi, yi, zi = position[i]
+        p_i = position[i]
+        xi, yi, zi = p_i[1], p_i[2], p_i[3]
 
         for j in 1:interaction.n_atoms
             ϕ_ij = zero(T)
             qj = charge[j]
-            xj, yj, zj = position[j]
+            p_j = position[j]
+            xj, yj, zj = p_j[1], p_j[2], p_j[3]
             for (s, w) in interaction.uspara.sw
                 ϕ_ij += w * s^2 * exp( - (zi - zj)^2 / s^2) * exp(-s^2 * k^2 / 4) * cos(kx * (xi - xj) + ky * (yi - yj))
             end
