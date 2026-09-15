@@ -7,54 +7,6 @@
 # tests, so it is already in this process. test/standalone.jl proves that part
 # in a fresh subprocess.
 
-# An array-of-structs element that is NOT an NTuple and NOT an SVector, and
-# supports nothing but indexing. If any read-only position parameter has
-# crept back to a concrete `Vector{NTuple{3,T}}` annotation, or if a kernel
-# destructures a position instead of indexing it, every query below fails.
-struct IdxOnlyPoint
-    v::NTuple{3, Float64}
-end
-Base.getindex(p::IdxOnlyPoint, i::Int) = p.v[i]
-
-# Squared slab minimum-image distance, written out independently of
-# `FastSpecSoG._min_image_slab` so that the configurations below are not built
-# with the same code they are used to test.
-function _slab_r2(p, q, L)
-    dx = p[1] - q[1]; dx -= L[1] * round(dx / L[1])
-    dy = p[2] - q[2]; dy -= L[2] * round(dy / L[2])
-    dz = p[3] - q[3]
-    return dx^2 + dy^2 + dz^2
-end
-
-"""
-    _random_poses(n, L; min_r, initial)
-
-`n` further positions uniform in the box, each at least `min_r` from every
-position already placed (including those in `initial`). A minimum separation is
-required, not cosmetic: the short-range Chebyshev interpolant is only built on
-`[r_min, r_c]`, so a pair closer than `r_min` raises an out-of-domain error from
-FastChebInterp. This is the framework-free equivalent of the `min_r = 1.0`
-that `SimulationInfo` applies in the older tests.
-"""
-function _random_poses(n, L; min_r = 1.0, initial = NTuple{3, Float64}[],
-                       max_attempts = 10_000)
-    poses = copy(initial)
-    target = length(poses) + n
-    while length(poses) < target
-        placed = false
-        for _ in 1:max_attempts
-            p = (rand() * L[1], rand() * L[2], rand() * L[3])
-            if all(q -> _slab_r2(p, q, L) >= min_r^2, poses)
-                push!(poses, p)
-                placed = true
-                break
-            end
-        end
-        placed || error("could not place particle $(length(poses) + 1) at min_r = $min_r")
-    end
-    return poses
-end
-
 @testset "plan API: slab minimum image" begin
     L = (50.0, 50.0, 50.0)
 
