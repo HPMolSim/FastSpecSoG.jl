@@ -12,15 +12,137 @@ For benchmarks, please see this repo https://github.com/xuanzhaogao/FSSoG_benchm
 
 ## Getting Started
 
-First you need to add its deps `ExTinyMD` in `Julia` by typing `]` in Julia REPL and then
-```julia
-pkg> add ExTinyMD
-```
-Then you can add this package by typing
 ```julia
 pkg> add FastSpecSoG
 ```
-to install the package.
+
+`ExTinyMD` is **not** required. It is a weak dependency: install it only if you
+want the MD adapter, and load it before you use it.
+
+```julia
+pkg> add ExTinyMD        # optional
+```
+
+## Standalone usage (no ExTinyMD)
+
+Everything in `src/` is framework-free. A plan is built from the box and the
+particle count, and then queried with plain arrays:
+
+```julia
+using FastSpecSoG
+
+n_atoms = 100
+L = (50.0, 50.0, 50.0)
+r_c = 10.0      # must be strictly less than min(Lx, Ly)/2 = 25.0
+
+# array-of-structs positions and a charge vector -- your own arrays, untouched
+poses   = [(rand() * L[1], rand() * L[2], rand() * L[3]) for _ in 1:n_atoms]
+charges = [isodd(i) ? 2.0 : -2.0 for i in 1:n_atoms]
+
+plan = FSSoGInteraction(L, n_atoms, r_c, 48, 0.5, (128, 128, 128), (16, 16, 16),
+                        5.0 .* (16, 16, 16), 2, 10, 3, (32, 32, 32), 48, 32, 32;
+                        preset = 3, ϵ = 1.0)
+
+E  = FastSpecSoG.energy(plan, poses, charges)
+Ei = energy_per_atom(plan, poses, charges)
+```
+
+Four things are worth knowing about this API.
+
+**`poses` is array-of-structs and its element type is not constrained.** The
+kernels only ever index `p[1]`, `p[2]`, `p[3]`, so `NTuple{3,T}`,
+`SVector{3,T}` and an MD framework's own point type all work directly, with no
+conversion layer.
+
+**Your arrays are never modified.** A query copies positions and charges into
+scratch the plan owns, so nothing is allocated per call and nothing you passed
+in is touched.
+
+**`r_c` must be strictly less than `min(Lx, Ly)/2`.** The short-range sum uses
+the minimum image under the x/y periodicity (z is the free slab axis), and the
+nearest image is only unique below that bound.
+
+**`energy` is defined but NOT exported.** Several sibling electrostatics
+packages define a function of the same name, so exporting it from all of them
+would make the bare name ambiguous under `using FastSpecSoG, SomeOther`. Call
+it as `FastSpecSoG.energy(...)`. The descriptive names stay exported and are
+unchanged: `energy_naive`, `energy_short`, `energy_mid`, `energy_long`,
+`energy_per_atom`, `short_energy_naive`, `short_energy_Cheb`,
+`long_energy_naive`, and the rest.
+
+### Passing a neighbour list
+
+The short-range sum takes all `i < j` pairs by default, which is `O(N^2)`. If
+you already maintain a neighbour list, pass it:
+
+```julia
+E = FastSpecSoG.energy(plan, poses, charges; neighbor_list = my_list)
+```
+
+`my_list` is any iterable whose elements support `pair[1]` and `pair[2]`, or an
+object that owns such a list under a `neighbor_list` property (which is how MD
+cell lists usually expose theirs). **Only the indices are used.** Any distance
+the list carries is ignored and the true three-dimensional separation is
+recomputed from the positions, because a quasi-2D cell list reports the
+in-plane distance, not the separation the energy needs. An in-plane list is a
+superset of the true pair set, so re-filtering on the recomputed distance gives
+the correct answer rather than merely rejecting bad data.
+
+Pairs at exactly zero separation -- two particles at one site, or two separated
+by an exact multiple of `Lx` or `Ly` with matching `y` and `z`, as a lattice
+initialisation produces -- are skipped, since the short-range kernel divides by
+`r`.
+
+## MD usage via ExTinyMD
+
+Loading `ExTinyMD` alongside this package activates
+`ext/FastSpecSoGExTinyMDExt.jl`, which adds one method:
+
+```julia
+using FastSpecSoG, ExTinyMD
+
+E  = ExTinyMD.energy(plan, neighborfinder, sys, info)
+Ei = FastSpecSoG.energy_per_atom(plan, neighborfinder, sys, info)
+```
+
+It gathers positions and charges in storage-slot order, honouring ExTinyMD's
+id/slot indirection (`sys.atoms` is indexed by particle id,
+`info.particle_info` by storage slot), and calls the core.
+
+**FastSpecSoG is energy-only and cannot drive an MD run.** It has never
+computed forces: there is no `force`, no `force!` and no
+`update_acceleration!`. `simulate!` calls `update_acceleration!` on every
+interaction at every step, so a FastSpecSoG plan could not be integrated
+regardless of this adapter.
+
+Relatedly, the plan types cannot be placed in `sys.interactions` or in an
+`EnergyLogger`: both require `ExTinyMD.AbstractInteraction`, and a struct's
+supertype is fixed where the struct is defined -- these are defined in `src/`,
+which has no ExTinyMD, so no extension can retrofit one. `ExTinyMD.energy` on a
+FastSpecSoG plan is therefore callable **directly and only directly**. For
+electrostatics that can drive `simulate!`, use ExTinyMD's own `Ewald2D` or
+`PME3D`, or `QuasiEwald.jl`/`SoEwald2D.jl`.
+
+### Changed from 0.1.x
+
+`ExTinyMD` moved from `[deps]` to `[weakdeps]`, and the query API changed, so
+0.2.0 is a breaking release.
+
+| 0.1.x | 0.2.0 |
+|---|---|
+| `ExTinyMD.energy(plan, neighbor, info, atoms)` | `ExTinyMD.energy(plan, finder, sys, info)`, or `FastSpecSoG.energy(plan, poses, charges)` |
+| `energy_naive(plan, neighbor, info, atoms)` | `energy_naive(plan, poses, charges; neighbor_list)` |
+| `energy_per_atom(plan, neighbor, info, atoms)` | `energy_per_atom(plan, poses, charges; neighbor_list)` |
+| `short_energy_naive(plan, neighbor, position, q)` | `short_energy_naive(plan, position, q; neighbor_list)` |
+| `short_energy_Cheb(cheb, r_c, F0, boundary, neighbor, position, q)` | `short_energy_Cheb(cheb, r_c, F0, L, position, q; neighbor_list)` |
+| `energy_short(plan, neighbor)` | `energy_short(plan; neighbor_list)` |
+| `plan.boundary` | removed -- it was only ever `Q2dBoundary(plan.L...)` |
+
+The old `ExTinyMD.energy(plan, neighbor, info, atoms)` methods were already
+unreachable from ExTinyMD: its MD loop calls
+`energy(interaction, neighborfinder, sys, info)`, a different argument order,
+so nothing but this package's own tests ever called them. The replacement
+carries the signature ExTinyMD actually uses.
 
 ## Numerical Methods
 
@@ -29,22 +151,15 @@ We assume $L_x \approx L_y$, and if $L_z \approx L_x$, we call the system a cubi
 
 For cubic systems, please refer to the following example:
 ```julia
+using FastSpecSoG
+
 n_atoms = 100
-L = 50.0
-boundary = ExTinyMD.Q2dBoundary(L, L, L)
+L = (50.0, 50.0, 50.0)
 
-atoms = Vector{Atom{Float64}}()
-for i in 1:n_atoms÷2
-    push!(atoms, Atom(type = 1, mass = 1.0, charge = 2.0))
-end
+poses   = [(rand() * L[1], rand() * L[2], rand() * L[3]) for _ in 1:n_atoms]
+charges = [isodd(i) ? 2.0 : -2.0 for i in 1:n_atoms]
 
-for i in n_atoms÷2 + 1 : n_atoms
-    push!(atoms, Atom(type = 2, mass = 1.0, charge = - 2.0))
-end
-
-info = SimulationInfo(n_atoms, atoms, (0.0, L, 0.0, L, 0.0, L), boundary; min_r = 1.0, temp = 1.0)
-
-r_c = 10.0
+r_c = 10.0      # < min(Lx, Ly)/2 = 25.0
 N_real = (128, 128, 128)
 w = (16, 16, 16)
 β = 5.0 .* w
@@ -58,32 +173,25 @@ Q = 48
 R_z0 = 32
 Q_0 = 32
 
-fssog_interaction = FSSoGInteraction((L, L, L), n_atoms, r_c, Q, 0.5, N_real, w, β, extra_pad_ratio, cheb_order, M_mid, N_grid, Q, R_z0, Q_0; preset = preset, ϵ = 1.0)
+fssog_interaction = FSSoGInteraction(L, n_atoms, r_c, Q, 0.5, N_real, w, β,
+                                     extra_pad_ratio, cheb_order, M_mid,
+                                     N_grid, Q, R_z0, Q_0;
+                                     preset = preset, ϵ = 1.0)
 
-fssog_neighbor = CellList3D(info, fssog_interaction.r_c, fssog_interaction.boundary, 1)
-energy_sog = ExTinyMD.energy(fssog_interaction, fssog_neighbor, info, atoms)
+energy_sog = FastSpecSoG.energy(fssog_interaction, poses, charges)
 ```
 
 For slab systems, please refer to the following example
 ```julia
+using FastSpecSoG
+
 n_atoms = 100
-Lx = 100.0
-Ly = 100.0
-Lz = 1.0
-boundary = ExTinyMD.Q2dBoundary(Lx, Ly, Lz)
+L = (100.0, 100.0, 1.0)
 
-atoms = Vector{Atom{Float64}}()
-for i in 1:n_atoms÷2
-    push!(atoms, Atom(type = 1, mass = 1.0, charge = 2.0))
-end
+poses   = [(rand() * L[1], rand() * L[2], rand() * L[3]) for _ in 1:n_atoms]
+charges = [isodd(i) ? 2.0 : -2.0 for i in 1:n_atoms]
 
-for i in n_atoms÷2 + 1 : n_atoms
-    push!(atoms, Atom(type = 2, mass = 1.0, charge = - 2.0))
-end
-
-info = SimulationInfo(n_atoms, atoms, (0.0, Lx, 0.0, Ly, 0.0, Lz), boundary; min_r = 1.0, temp = 1.0)
-
-r_c = 1.0
+r_c = 10.0      # < min(Lx, Ly)/2 = 50.0
 N_real = (128, 128)
 R_z = 32
 w = (16, 16)
@@ -95,11 +203,16 @@ Q_0 = 32
 R_z0 = 32
 Taylor_Q = 24
 
-fssog_interaction = FSSoGThinInteraction((Lx, Ly, Lz), n_atoms, r_c, Q, 0.5, N_real, R_z, w, β, cheb_order, Taylor_Q, R_z0, Q_0; preset = preset, ϵ = 1.0)
+fssog_interaction = FSSoGThinInteraction(L, n_atoms, r_c, Q, 0.5, N_real, R_z,
+                                         w, β, cheb_order, Taylor_Q, R_z0, Q_0;
+                                         preset = preset, ϵ = 1.0)
 
-fssog_neighbor = CellList3D(info, fssog_interaction.r_c, fssog_interaction.boundary, 1)
-energy_sog = ExTinyMD.energy(fssog_interaction, fssog_neighbor, info, atoms)
+energy_sog = FastSpecSoG.energy(fssog_interaction, poses, charges)
 ```
+
+Both examples place particles at random, which can put two closer than the
+`r_min = 0.5` floor of the short-range Chebyshev interpolant; use a
+configuration with a minimum separation (or raise `r_min`) for real work.
 
 ## Citation
 
